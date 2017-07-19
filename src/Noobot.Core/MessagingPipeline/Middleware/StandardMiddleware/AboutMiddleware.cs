@@ -28,6 +28,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.StandardMiddleware
         {
             yield return message.ReplyDirectlyToUser("Noobot - Created by Simon Colmer " + DateTime.Now.Year);
             yield return message.ReplyDirectlyToUser("I am an extensible SlackBot built in C# using loads of awesome open source projects.");
+            yield return message.ReplyDirectlyToUser("Forked by Sophia Clarkke for use with the Testrail API!");
             yield return message.ReplyDirectlyToUser("Please find more at http://github.com/noobot/noobot");
         }
     }

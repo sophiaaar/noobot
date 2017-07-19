@@ -49,7 +49,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                     {
                         new StartsWithHandle("sections"),
                     },
-                    Description = "Lists all sections within the Unity Testrail project",
+                    Description = "Lists all sections within the Unity Testrail project given a suite ID eg sections 2",
                     EvaluatorFunc = SectionsHandler
                 }
             };
@@ -74,7 +74,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
             }
             else
             {
-
+                //TODO - handle if ID is invalid
                 yield return message.IndicateTypingOnChannel();
                 APIClient client = ConnectToTestrail();
 
