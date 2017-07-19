@@ -22,7 +22,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.StandardMiddleware
                     ValidHandles = new IValidHandle[]
                     {
                         new StartsWithHandle("help"),
-                        new ExactMatchHandle("yo tell me more")
+                        //new ExactMatchHandle("yo tell me more")
                     },
                     Description = "Returns supported commands and descriptions of how to use them",
                     EvaluatorFunc = HelpHandler

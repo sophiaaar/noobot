@@ -111,6 +111,7 @@
     <Compile Include="Logging\MultiLogger.cs" />
     <Compile Include="Logging\MultiLoggerFactoryAdapter.cs" />
     <Compile Include="MessagingPipeline\Middleware\CommandDescription.cs" />
+    <Compile Include="MessagingPipeline\Middleware\CustomMiddleware\TestrailMiddleware.cs" />
     <Compile Include="MessagingPipeline\Middleware\IMiddleware.cs" />
     <Compile Include="MessagingPipeline\Middleware\HandlerMapping.cs" />
     <Compile Include="MessagingPipeline\Middleware\StandardMiddleware\StatsMiddleware.cs" />
@@ -132,6 +133,8 @@
     <Compile Include="MessagingPipeline\Response\ResponseMessage.cs" />
     <Compile Include="MessagingPipeline\Response\ResponseType.cs" />
     <Compile Include="MessagingPipeline\Response\TypingIndicatorMessage.cs" />
+    <Compile Include="Plugins\dotnet\Gurock\TestRail\APIClient.cs" />
+    <Compile Include="Plugins\dotnet\Gurock\TestRail\APIException.cs" />
     <Compile Include="Plugins\IPlugin.cs" />
     <Compile Include="Plugins\StandardPlugins\ConnectionPlugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -142,8 +145,11 @@
   <ItemGroup>
     <None Include="app.config" />
     <None Include="packages.config" />
+    <None Include="Plugins\dotnet\readme.md" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="Plugins\dotnet\Gurock.TestRail.csproj" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

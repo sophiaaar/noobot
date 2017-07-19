@@ -26,6 +26,11 @@
         bool AboutEnabled { get; }
 
         /// <summary>
+        /// Should the "Testrail" middleware be used?
+        /// </summary>
+        bool TestrailEnabled { get; }
+
+        /// <summary>
         /// Should return any other configuration values you need within your middleware/plugins.
         /// </summary>
         T GetConfigEntry<T>(string entryName);

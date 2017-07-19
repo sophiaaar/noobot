@@ -6,6 +6,7 @@ using Common.Logging;
 using Noobot.Core.Configuration;
 using Noobot.Core.MessagingPipeline.Middleware;
 using Noobot.Core.MessagingPipeline.Middleware.StandardMiddleware;
+using Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware;
 using Noobot.Core.Plugins.StandardPlugins;
 using StructureMap;
 using StructureMap.Pipeline;
@@ -102,6 +103,10 @@ namespace Noobot.Core.DependencyResolution
             if (_configReader.StatsEnabled)
             {
                 registry.For<IMiddleware>().DecorateAllWith<StatsMiddleware>();
+            }
+            if (_configReader.TestrailEnabled)
+            {
+                registry.For<IMiddleware>().DecorateAllWith<TestrailMiddleware>();
             }
 
             while (pipeline.Any())
