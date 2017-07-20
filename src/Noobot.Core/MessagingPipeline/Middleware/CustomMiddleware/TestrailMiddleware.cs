@@ -51,6 +51,33 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                     },
                     Description = "Lists all sections within the Unity Testrail project given a suite ID eg sections 2",
                     EvaluatorFunc = SectionsHandler
+                },
+                new HandlerMapping
+                {
+                    ValidHandles = new IValidHandle[]
+                    {
+                        new StartsWithHandle("plans"),
+                    },
+                    Description = "Lists all plans within a Testrail project given a project ID eg plans 2",
+                    EvaluatorFunc = PlansHandler
+                },
+                new HandlerMapping
+                {
+                    ValidHandles = new IValidHandle[]
+                    {
+                        new StartsWithHandle("runs"),
+                    },
+                    Description = "Lists all runs (that are not a part of a plan) within a Testrail project given a project ID eg runs 2",
+                    EvaluatorFunc = RunsHandler
+                },
+                new HandlerMapping
+                {
+                    ValidHandles = new IValidHandle[]
+                    {
+                        new StartsWithHandle("tests"),
+                    },
+                    Description = "Lists all tests for a test run eg tests 2",
+                    EvaluatorFunc = TestsHandler
                 }
             };
         }
@@ -58,8 +85,8 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
         private APIClient ConnectToTestrail()
         {
             APIClient client = new APIClient("http://qatestrail.hq.unity3d.com");
-            client.User = ".."; //TODO - make this able to log in via slack?
-            client.Password = ".."; //store this in a config file sophiadebug
+            client.User = ""; //TODO - make this able to log in via slack?
+            client.Password = ""; //store this in a config file sophiadebug
             return client;
         }
 
@@ -86,7 +113,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 }
                 catch (APIException e)
                 {
-                    responseFromAPI = e.ToString();
+                    responseFromAPI = e.ToString(); // prettify these later
                 }
                 yield return message.ReplyDirectlyToUser(responseFromAPI);
 
@@ -165,6 +192,90 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 try
                 {
                     JArray c = (JArray)client.SendGet($"get_sections/2&suite_id={searchTerm}"); //need to get IDs first
+                    responseFromAPI = c.ToString();
+                }
+                catch (APIException e)
+                {
+                    responseFromAPI = e.ToString();
+                }
+                yield return message.ReplyDirectlyToUser(responseFromAPI);
+            }
+        }
+
+        private IEnumerable<ResponseMessage> PlansHandler(IncomingMessage message, IValidHandle matchedHandle)
+        {
+            string searchTerm = message.TargetedText.Substring("plans".Length).Trim();
+            yield return message.ReplyDirectlyToUser("sophiadebug search term " + searchTerm);
+
+            if (string.IsNullOrEmpty(searchTerm))
+            {
+                yield return message.ReplyToChannel("Give me something to search! plans [project_id] eg plans 1");
+            }
+            else
+            {
+                yield return message.IndicateTypingOnChannel();
+                APIClient client = ConnectToTestrail();
+                string responseFromAPI = "";
+
+                try
+                {
+                    JArray c = (JArray)client.SendGet($"get_plans/{searchTerm}");
+                    responseFromAPI = c.ToString();
+                }
+                catch (APIException e)
+                {
+                    responseFromAPI = e.ToString();
+                }
+                yield return message.ReplyDirectlyToUser(responseFromAPI);
+            }
+        }
+
+        private IEnumerable<ResponseMessage> RunsHandler(IncomingMessage message, IValidHandle matchedHandle)
+        {
+            string searchTerm = message.TargetedText.Substring("runs".Length).Trim();
+            yield return message.ReplyDirectlyToUser("sophiadebug search term " + searchTerm);
+
+            if (string.IsNullOrEmpty(searchTerm))
+            {
+                yield return message.ReplyToChannel("Give me something to search! runs [project_id] eg runs 1");
+            }
+            else
+            {
+                yield return message.IndicateTypingOnChannel();
+                APIClient client = ConnectToTestrail();
+                string responseFromAPI = "";
+
+                try
+                {
+                    JArray c = (JArray)client.SendGet($"get_runs/{searchTerm}");
+                    responseFromAPI = c.ToString();
+                }
+                catch (APIException e)
+                {
+                    responseFromAPI = e.ToString();
+                }
+                yield return message.ReplyDirectlyToUser(responseFromAPI);
+            }
+        }
+
+        private IEnumerable<ResponseMessage> TestsHandler(IncomingMessage message, IValidHandle matchedHandle)
+        {
+            string searchTerm = message.TargetedText.Substring("tests".Length).Trim();
+            yield return message.ReplyDirectlyToUser("sophiadebug search term " + searchTerm);
+
+            if (string.IsNullOrEmpty(searchTerm))
+            {
+                yield return message.ReplyToChannel("Give me something to search! tests [test_id] eg tests 1");
+            }
+            else
+            {
+                yield return message.IndicateTypingOnChannel();
+                APIClient client = ConnectToTestrail();
+                string responseFromAPI = "";
+
+                try
+                {
+                    JArray c = (JArray)client.SendGet($"get_tests/{searchTerm}");
                     responseFromAPI = c.ToString();
                 }
                 catch (APIException e)
