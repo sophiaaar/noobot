@@ -77,8 +77,19 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 //TODO - handle if ID is invalid
                 yield return message.IndicateTypingOnChannel();
                 APIClient client = ConnectToTestrail();
+                string responseFromAPI = "";
 
-                JArray c = (JArray)client.SendGet($"get_suites/{searchTerm}");
+                try
+                {
+                    JArray c = (JArray)client.SendGet($"get_suites/{searchTerm}");
+                    responseFromAPI = c.ToString() + "\n I suggest pinning that message so you don't need to request it again!";
+                }
+                catch (APIException e)
+                {
+                    responseFromAPI = e.ToString();
+                }
+                yield return message.ReplyDirectlyToUser(responseFromAPI);
+
                 //gets the suites in the Unity project
 
                 //Attachment suites = new Attachment();
@@ -88,8 +99,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
 
                 //yield return message.ReplyToChannel("Here, ", suites);
 
-                yield return message.ReplyDirectlyToUser(c.ToString());
-                yield return message.ReplyDirectlyToUser("I suggest pinning that message so you don't need to request it again!");
+
             }
         }
 
@@ -104,10 +114,18 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
             {
                 yield return message.IndicateTypingOnChannel();
                 APIClient client = ConnectToTestrail();
+                string responseFromAPI = "";
 
-                JObject c = (JObject)client.SendGet($"get_suite/{searchTerm}");
-
-                yield return message.ReplyDirectlyToUser(c.ToString());
+                try
+                {
+                    JObject c = (JObject)client.SendGet($"get_suite/{searchTerm}");
+                    responseFromAPI = c.ToString();
+                }
+                catch (APIException e)
+                {
+                    responseFromAPI = e.ToString();
+                }
+                yield return message.ReplyDirectlyToUser(responseFromAPI);
             }
         }
 
@@ -115,11 +133,18 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
         {
             yield return message.IndicateTypingOnChannel();
             APIClient client = ConnectToTestrail();
+            string responseFromAPI = "";
 
-            JArray c = (JArray)client.SendGet($"get_projects");
-
-            yield return message.ReplyDirectlyToUser(c.ToString());
-            yield return message.ReplyDirectlyToUser("I suggest pinning that message so you don't need to request it again!");
+            try
+            { 
+                JArray c = (JArray)client.SendGet($"get_projects");
+                responseFromAPI = c.ToString() + "\n I suggest pinning that message so you don't need to request it again!";
+            }
+            catch (APIException e)
+            {
+                responseFromAPI = e.ToString();
+            }
+            yield return message.ReplyDirectlyToUser(responseFromAPI);
         }
 
         private IEnumerable<ResponseMessage> SectionsHandler(IncomingMessage message, IValidHandle matchedHandle)
@@ -135,11 +160,18 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
             {
                 yield return message.IndicateTypingOnChannel();
                 APIClient client = ConnectToTestrail();
+                string responseFromAPI = "";
 
-                JArray c = (JArray)client.SendGet($"get_sections/2&suite_id={searchTerm}"); //need to get IDs first
-                //gets the suites in the Unity project
-
-                yield return message.ReplyDirectlyToUser(c.ToString());
+                try
+                {
+                    JArray c = (JArray)client.SendGet($"get_sections/2&suite_id={searchTerm}"); //need to get IDs first
+                    responseFromAPI = c.ToString();
+                }
+                catch (APIException e)
+                {
+                    responseFromAPI = e.ToString();
+                }
+                yield return message.ReplyDirectlyToUser(responseFromAPI);
             }
         }
     }
