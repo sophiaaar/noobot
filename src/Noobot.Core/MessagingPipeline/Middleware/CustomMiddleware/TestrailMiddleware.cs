@@ -49,7 +49,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                     {
                         new StartsWithHandle("sections"),
                     },
-                    Description = "Lists all sections within the Unity Testrail project given a suite ID eg sections 2",
+                    Description = "Lists all sections within the Unity Testrail project given a project ID and suite ID eg sections 1 2",
                     EvaluatorFunc = SectionsHandler
                 },
                 new HandlerMapping
@@ -101,7 +101,6 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
             }
             else
             {
-                //TODO - handle if ID is invalid
                 yield return message.IndicateTypingOnChannel();
                 APIClient client = ConnectToTestrail();
                 string responseFromAPI = "";
@@ -109,24 +108,14 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 try
                 {
                     JArray c = (JArray)client.SendGet($"get_suites/{searchTerm}");
-                    responseFromAPI = c.ToString() + "\n I suggest pinning that message so you don't need to request it again!";
+                    string parsed = ParseSuites(c);
+                    responseFromAPI = parsed + "\n I suggest pinning that message so you don't need to request it again!";
                 }
                 catch (APIException e)
                 {
                     responseFromAPI = e.ToString(); // prettify these later
                 }
                 yield return message.ReplyDirectlyToUser(responseFromAPI);
-
-                //gets the suites in the Unity project
-
-                //Attachment suites = new Attachment();
-                //suites.Text = c.ToString();
-                //suites.Text = "this is a test";
-                //suites.Title = "Suites.txt";
-
-                //yield return message.ReplyToChannel("Here, ", suites);
-
-
             }
         }
 
@@ -146,7 +135,8 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 try
                 {
                     JObject c = (JObject)client.SendGet($"get_suite/{searchTerm}");
-                    responseFromAPI = c.ToString();
+                    string parsed = ParseSuiteID(c);
+                    responseFromAPI = parsed;
                 }
                 catch (APIException e)
                 {
@@ -165,7 +155,8 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
             try
             { 
                 JArray c = (JArray)client.SendGet($"get_projects");
-                responseFromAPI = c.ToString() + "\n I suggest pinning that message so you don't need to request it again!";
+                string parsed = ParseProjects(c);
+                responseFromAPI = parsed + "\n I suggest pinning that message so you don't need to request it again!";
             }
             catch (APIException e)
             {
@@ -181,7 +172,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
 
             if (string.IsNullOrEmpty(searchTerm))
             {
-                yield return message.ReplyToChannel("Give me something to search! Needs to be a suite_id within the Unity project. sections [suite_id] eg sections 1");
+                yield return message.ReplyToChannel("Give me something to search! Needs to be a suite_id within the Unity project. sections [project_id] [suite_id] eg sections 1 1");
             }
             else
             {
@@ -189,10 +180,13 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 APIClient client = ConnectToTestrail();
                 string responseFromAPI = "";
 
+                string[] terms = searchTerm.Split(' ');
+
                 try
                 {
-                    JArray c = (JArray)client.SendGet($"get_sections/2&suite_id={searchTerm}"); //need to get IDs first
-                    responseFromAPI = c.ToString();
+                    JArray c = (JArray)client.SendGet($"get_sections/{terms[0]}&suite_id={terms[1]}"); //need to get IDs first
+                    string parsed = ParseSections(c);
+                    responseFromAPI = parsed;
                 }
                 catch (APIException e)
                 {
@@ -220,7 +214,8 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 try
                 {
                     JArray c = (JArray)client.SendGet($"get_plans/{searchTerm}");
-                    responseFromAPI = c.ToString();
+                    string parsed = ParsePlans(c);
+                    responseFromAPI = parsed;
                 }
                 catch (APIException e)
                 {
@@ -284,6 +279,76 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 }
                 yield return message.ReplyDirectlyToUser(responseFromAPI);
             }
+        }
+
+        private string ParseSections(JArray array)
+        {
+            foreach (JObject arrayObject in array)
+            {
+                arrayObject.Property("suite_id").Remove();
+                arrayObject.Property("parent_id").Remove();
+                arrayObject.Property("display_order").Remove();
+                arrayObject.Property("depth").Remove();
+            }            
+            return array.ToString();
+        }
+
+        private string ParseSuites(JArray array)
+        {
+            foreach (JObject arrayObject in array)
+            {
+                arrayObject.Property("project_id").Remove();
+                arrayObject.Property("is_master").Remove();
+                arrayObject.Property("is_baseline").Remove();
+                arrayObject.Property("is_completed").Remove();
+                arrayObject.Property("completed_on").Remove();
+            }
+            return array.ToString();
+        }
+
+        private string ParseSuiteID(JObject jObj)
+        {
+            jObj.Property("id").Remove();
+            jObj.Property("project_id").Remove();
+            jObj.Property("is_master").Remove();
+            jObj.Property("is_baseline").Remove();
+            jObj.Property("is_completed").Remove();
+            jObj.Property("completed_on").Remove();
+            return jObj.ToString();
+        }
+
+        private string ParseProjects(JArray array)
+        {
+            foreach (JObject arrayObject in array)
+            {
+                arrayObject.Property("show_announcement").Remove();
+                arrayObject.Property("is_completed").Remove();
+                arrayObject.Property("completed_on").Remove();
+                arrayObject.Property("suite_mode").Remove();
+            }
+            return array.ToString();
+        }
+
+        private string ParsePlans(JArray array)
+        {
+            foreach (JObject arrayObject in array)
+            {
+                arrayObject.Property("assignedto_id").Remove();
+                arrayObject.Property("is_completed").Remove();
+                arrayObject.Property("completed_on").Remove();
+                arrayObject.Property("blocked_count").Remove();
+                arrayObject.Property("retest_count").Remove();
+                arrayObject.Property("custom_status1_count").Remove();
+                arrayObject.Property("custom_status2_count").Remove();
+                arrayObject.Property("custom_status3_count").Remove();
+                arrayObject.Property("custom_status4_count").Remove();
+                arrayObject.Property("custom_status5_count").Remove();
+                arrayObject.Property("custom_status6_count").Remove();
+                arrayObject.Property("custom_status7_count").Remove();
+                arrayObject.Property("created_on").Remove();
+                arrayObject.Property("created_by").Remove();
+            }
+            return array.ToString();
         }
     }
 }
