@@ -112,22 +112,6 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                     JArray c = (JArray)client.SendGet($"get_suites/{searchTerm}");
                     JArray parsed = ParseSuites(c);
                     suiteAttachments = CreateAttachmentsFromSuites(parsed);
-                    //if (suiteAttachments.Count > 15)
-                    //{
-                    //    listOfLists = splitList(suiteAttachments, 15);
-                    //    foreach (List<Attachment> list in listOfLists)
-                    //    {
-                    //        yield return message.ReplyToChannel(responseFromAPI, list);
-                    //    }
-                    //    yield return message.ReplyToChannel("Pin whatever you need for future use!");
-                    //    //yield return message.ReplyToChannel(responseFromAPI, suiteAttachments);
-                    //}
-                    //else
-                    //{
-                    //    yield return message.ReplyToChannel(responseFromAPI, suiteAttachments);
-                    //    yield return message.ReplyToChannel("Pin whatever you need for future use!");
-                    //}
-                    //responseFromAPI = parsed.ToString() + "\n I suggest pinning that message so you don't need to request it again!";
                     responseFromAPI = "";
                 }
                 catch (APIException e)
@@ -151,8 +135,6 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                         yield return message.ReplyToChannel(responseFromAPI, suiteAttachments);
                         yield return message.ReplyToChannel("Pin whatever you need for future use!");
                     }
-                    //yield return message.ReplyToChannel(responseFromAPI, suiteAttachments);
-                    //yield return message.ReplyToChannel("Pin whatever you need for future use!");
                 }
                 else
                 {
@@ -221,20 +203,23 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 yield return message.IndicateTypingOnChannel();
                 APIClient client = ConnectToTestrail();
                 string responseFromAPI = "";
+                List<Attachment> listOfSectionAttachments = new List<Attachment>();
 
                 string[] terms = searchTerm.Split(' ');
 
                 try
                 {
                     JArray c = (JArray)client.SendGet($"get_sections/{terms[0]}&suite_id={terms[1]}"); //need to get IDs first
-                    string parsed = ParseSections(c);
-                    responseFromAPI = parsed;
+                    JArray parsed = ParseSections(c);
+                    listOfSectionAttachments = CreateAttachmentsFromSections(c);
+                    //responseFromAPI = parsed.ToString();
+                    responseFromAPI = "";
                 }
                 catch (APIException e)
                 {
                     responseFromAPI = e.ToString();
                 }
-                yield return message.ReplyDirectlyToUser(responseFromAPI);
+                yield return message.ReplyToChannel(responseFromAPI, listOfSectionAttachments);
             }
         }
 
@@ -323,7 +308,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
             }
         }
 
-        private string ParseSections(JArray array)
+        private JArray ParseSections(JArray array)
         {
             foreach (JObject arrayObject in array)
             {
@@ -332,7 +317,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 arrayObject.Property("display_order").Remove();
                 arrayObject.Property("depth").Remove();
             }            
-            return array.ToString();
+            return array;
         }
 
         private JArray ParseSuites(JArray array)
@@ -401,6 +386,20 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 Attachment attach = new Attachment();
                 attach.Title = jObj.Property("name").Value.ToString();
                 attach.TitleLink = jObj.Property("url").Value.ToString();
+                attach.Text = "ID=" + jObj.Property("id").Value.ToString() + "\n" + jObj.Property("description").Value.ToString();
+                attachments.Add(attach);
+            }
+            return attachments;
+        }
+
+        private List<Attachment> CreateAttachmentsFromSections(JArray array)
+        {
+            List<Attachment> attachments = new List<Attachment>();
+            foreach (JObject jObj in array)
+            {
+                Attachment attach = new Attachment();
+                attach.Title = jObj.Property("name").Value.ToString();
+                //attach.TitleLink = jObj.Property("url").Value.ToString();
                 attach.Text = "ID=" + jObj.Property("id").Value.ToString() + "\n" + jObj.Property("description").Value.ToString();
                 attachments.Add(attach);
             }
