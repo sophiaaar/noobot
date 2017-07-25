@@ -16,6 +16,7 @@ namespace Noobot.Core.MessagingPipeline.Response
 
         public string ImageUrl { get; set; }
         public string ThumbUrl { get; set; }
+        public string TitleLink { get; set; }
 
         public string Color { get; set; }
 

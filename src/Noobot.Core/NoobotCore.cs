@@ -197,6 +197,8 @@ namespace Noobot.Core
                         Fallback = attachment.Fallback,
                         ImageUrl = attachment.ImageUrl,
                         ThumbUrl = attachment.ThumbUrl,
+                        TitleLink = attachment.TitleLink,
+                        //CallbackId = attachment.CallbackId,
                         AuthorName = attachment.AuthorName,
                         ColorHex = attachment.Color,
                         Fields = GetAttachmentFields(attachment)

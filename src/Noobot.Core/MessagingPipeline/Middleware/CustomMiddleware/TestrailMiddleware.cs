@@ -93,7 +93,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
         private IEnumerable<ResponseMessage> SuitesHandler(IncomingMessage message, IValidHandle matchedHandle)
         {
             string searchTerm = message.TargetedText.Substring("suites".Length).Trim();
-            yield return message.ReplyDirectlyToUser("sophiadebug search term " + searchTerm);
+            //yield return message.ReplyDirectlyToUser("sophiadebug search term " + searchTerm);
 
             if (string.IsNullOrEmpty(searchTerm))
             {
@@ -104,18 +104,60 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 yield return message.IndicateTypingOnChannel();
                 APIClient client = ConnectToTestrail();
                 string responseFromAPI = "";
+                List<Attachment> suiteAttachments = new List<Attachment>();
+                List<List<Attachment>> listOfLists = new List<List<Attachment>>();
 
                 try
                 {
                     JArray c = (JArray)client.SendGet($"get_suites/{searchTerm}");
-                    string parsed = ParseSuites(c);
-                    responseFromAPI = parsed + "\n I suggest pinning that message so you don't need to request it again!";
+                    JArray parsed = ParseSuites(c);
+                    suiteAttachments = CreateAttachmentsFromSuites(parsed);
+                    //if (suiteAttachments.Count > 15)
+                    //{
+                    //    listOfLists = splitList(suiteAttachments, 15);
+                    //    foreach (List<Attachment> list in listOfLists)
+                    //    {
+                    //        yield return message.ReplyToChannel(responseFromAPI, list);
+                    //    }
+                    //    yield return message.ReplyToChannel("Pin whatever you need for future use!");
+                    //    //yield return message.ReplyToChannel(responseFromAPI, suiteAttachments);
+                    //}
+                    //else
+                    //{
+                    //    yield return message.ReplyToChannel(responseFromAPI, suiteAttachments);
+                    //    yield return message.ReplyToChannel("Pin whatever you need for future use!");
+                    //}
+                    //responseFromAPI = parsed.ToString() + "\n I suggest pinning that message so you don't need to request it again!";
+                    responseFromAPI = "";
                 }
                 catch (APIException e)
                 {
                     responseFromAPI = e.ToString(); // prettify these later
                 }
-                yield return message.ReplyDirectlyToUser(responseFromAPI);
+                if (suiteAttachments.Count != 0)
+                {
+                    if (suiteAttachments.Count > 15)
+                    {
+                        listOfLists = splitList(suiteAttachments, 15);
+                        foreach (List<Attachment> list in listOfLists)
+                        {
+                            yield return message.ReplyToChannel(responseFromAPI, list);
+                        }
+                        yield return message.ReplyToChannel("Pin whatever you need for future use!");
+                        //yield return message.ReplyToChannel(responseFromAPI, suiteAttachments);
+                    }
+                    else
+                    {
+                        yield return message.ReplyToChannel(responseFromAPI, suiteAttachments);
+                        yield return message.ReplyToChannel("Pin whatever you need for future use!");
+                    }
+                    //yield return message.ReplyToChannel(responseFromAPI, suiteAttachments);
+                    //yield return message.ReplyToChannel("Pin whatever you need for future use!");
+                }
+                else
+                {
+                    yield return message.ReplyToChannel(responseFromAPI);
+                }
             }
         }
 
@@ -293,7 +335,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
             return array.ToString();
         }
 
-        private string ParseSuites(JArray array)
+        private JArray ParseSuites(JArray array)
         {
             foreach (JObject arrayObject in array)
             {
@@ -303,7 +345,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 arrayObject.Property("is_completed").Remove();
                 arrayObject.Property("completed_on").Remove();
             }
-            return array.ToString();
+            return array;
         }
 
         private string ParseSuiteID(JObject jObj)
@@ -349,6 +391,31 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 arrayObject.Property("created_by").Remove();
             }
             return array.ToString();
+        }
+
+        private List<Attachment> CreateAttachmentsFromSuites(JArray array)
+        {
+            List<Attachment> attachments = new List<Attachment>();
+            foreach (JObject jObj in array)
+            {
+                Attachment attach = new Attachment();
+                attach.Title = jObj.Property("name").Value.ToString();
+                attach.TitleLink = jObj.Property("url").Value.ToString();
+                attach.Text = "ID=" + jObj.Property("id").Value.ToString() + "\n" + jObj.Property("description").Value.ToString();
+                attachments.Add(attach);
+            }
+            return attachments;
+        }
+
+        private List<List<Attachment>> splitList(List<Attachment> listOfAttachments, int nSize)
+        {
+            var list = new List<List<Attachment>>();
+
+            for (int i=0; i<listOfAttachments.Count; i += nSize)
+            {
+                list.Add(listOfAttachments.GetRange(i, Math.Min(nSize, listOfAttachments.Count - i)));
+            }
+            return list;
         }
     }
 }
