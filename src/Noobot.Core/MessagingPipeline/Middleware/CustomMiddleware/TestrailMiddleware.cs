@@ -38,6 +38,15 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 {
                     ValidHandles = new IValidHandle[]
                     {
+                        new StartsWithHandle("suite_search"),
+                    },
+                    Description = "Lists suites within a project containing a search term. eg suite_search 1 2D",
+                    EvaluatorFunc = SuiteSearchHandler
+                },
+                new HandlerMapping
+                {
+                    ValidHandles = new IValidHandle[]
+                    {
                         new ExactMatchHandle("projects"),
                     },
                     Description = "Lists all projects on Testrail",
@@ -122,7 +131,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 {
                     if (suiteAttachments.Count > 15)
                     {
-                        listOfLists = splitList(suiteAttachments, 15);
+                        listOfLists = splitList(suiteAttachments, 14);
                         foreach (List<Attachment> list in listOfLists)
                         {
                             yield return message.ReplyToChannel(responseFromAPI, list);
@@ -154,19 +163,53 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
             {
                 yield return message.IndicateTypingOnChannel();
                 APIClient client = ConnectToTestrail();
+                List<Attachment> suiteAttachments = new List<Attachment>();
                 string responseFromAPI = "";
 
                 try
                 {
                     JObject c = (JObject)client.SendGet($"get_suite/{searchTerm}");
-                    string parsed = ParseSuiteID(c);
-                    responseFromAPI = parsed;
+                    JObject parsed = ParseSuiteID(c);
+                    suiteAttachments = CreateAttachmentsFromSuiteID(parsed);
+                    responseFromAPI = "";
                 }
                 catch (APIException e)
                 {
                     responseFromAPI = e.ToString();
                 }
-                yield return message.ReplyDirectlyToUser(responseFromAPI);
+                yield return message.ReplyToChannel(responseFromAPI, suiteAttachments);
+            }
+        }
+
+        private IEnumerable<ResponseMessage> SuiteSearchHandler(IncomingMessage message, IValidHandle matchedHandle)
+        {
+            string searchTerm = message.TargetedText.Substring("suite_search".Length).Trim();
+            if (string.IsNullOrEmpty(searchTerm))
+            {
+                yield return message.ReplyToChannel("Give me something to search! eg suite_search 1 animation");
+            }
+            else
+            {
+                yield return message.IndicateTypingOnChannel();
+                APIClient client = ConnectToTestrail();
+                List<Attachment> suiteAttachments = new List<Attachment>();
+                string responseFromAPI = "";
+
+                string[] terms = searchTerm.Split(' ');
+
+                try
+                {
+                    //parse first
+                    JArray c = (JArray)client.SendGet($"get_suites/{terms[0]}");
+                    JArray parsed = ParseSuites(c);
+                    suiteAttachments = CreateAttachmentsFromSuiteSearch(parsed, terms[1]);
+                    responseFromAPI = $"Here are the suites in project {terms[0]} containing the term \"{terms[1]}\": ";
+                }
+                catch (APIException e)
+                {
+                    responseFromAPI = e.ToString();
+                }
+                yield return message.ReplyToChannel(responseFromAPI, suiteAttachments);
             }
         }
 
@@ -174,25 +217,28 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
         {
             yield return message.IndicateTypingOnChannel();
             APIClient client = ConnectToTestrail();
+            List<Attachment> projectAttachments = new List<Attachment>();
             string responseFromAPI = "";
 
             try
             { 
                 JArray c = (JArray)client.SendGet($"get_projects");
-                string parsed = ParseProjects(c);
-                responseFromAPI = parsed + "\n I suggest pinning that message so you don't need to request it again!";
+                JArray parsed = ParseProjects(c);
+                projectAttachments = CreateAttachmentsFromProjects(parsed);
+                responseFromAPI = "";
+                //responseFromAPI = parsed + "\n I suggest pinning that message so you don't need to request it again!";
             }
             catch (APIException e)
             {
                 responseFromAPI = e.ToString();
             }
-            yield return message.ReplyDirectlyToUser(responseFromAPI);
+            yield return message.ReplyToChannel(responseFromAPI, projectAttachments);
         }
 
         private IEnumerable<ResponseMessage> SectionsHandler(IncomingMessage message, IValidHandle matchedHandle)
         {
             string searchTerm = message.TargetedText.Substring("sections".Length).Trim();
-            yield return message.ReplyDirectlyToUser("sophiadebug search term " + searchTerm);
+            //yield return message.ReplyDirectlyToUser("sophiadebug search term " + searchTerm);
 
             if (string.IsNullOrEmpty(searchTerm))
             {
@@ -226,7 +272,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
         private IEnumerable<ResponseMessage> PlansHandler(IncomingMessage message, IValidHandle matchedHandle)
         {
             string searchTerm = message.TargetedText.Substring("plans".Length).Trim();
-            yield return message.ReplyDirectlyToUser("sophiadebug search term " + searchTerm);
+            //yield return message.ReplyDirectlyToUser("sophiadebug search term " + searchTerm);
 
             if (string.IsNullOrEmpty(searchTerm))
             {
@@ -255,7 +301,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
         private IEnumerable<ResponseMessage> RunsHandler(IncomingMessage message, IValidHandle matchedHandle)
         {
             string searchTerm = message.TargetedText.Substring("runs".Length).Trim();
-            yield return message.ReplyDirectlyToUser("sophiadebug search term " + searchTerm);
+            //yield return message.ReplyDirectlyToUser("sophiadebug search term " + searchTerm);
 
             if (string.IsNullOrEmpty(searchTerm))
             {
@@ -283,7 +329,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
         private IEnumerable<ResponseMessage> TestsHandler(IncomingMessage message, IValidHandle matchedHandle)
         {
             string searchTerm = message.TargetedText.Substring("tests".Length).Trim();
-            yield return message.ReplyDirectlyToUser("sophiadebug search term " + searchTerm);
+            //yield return message.ReplyDirectlyToUser("sophiadebug search term " + searchTerm);
 
             if (string.IsNullOrEmpty(searchTerm))
             {
@@ -333,7 +379,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
             return array;
         }
 
-        private string ParseSuiteID(JObject jObj)
+        private JObject ParseSuiteID(JObject jObj)
         {
             jObj.Property("id").Remove();
             jObj.Property("project_id").Remove();
@@ -341,19 +387,20 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
             jObj.Property("is_baseline").Remove();
             jObj.Property("is_completed").Remove();
             jObj.Property("completed_on").Remove();
-            return jObj.ToString();
+            return jObj;
         }
 
-        private string ParseProjects(JArray array)
+        private JArray ParseProjects(JArray array)
         {
             foreach (JObject arrayObject in array)
             {
                 arrayObject.Property("show_announcement").Remove();
+                arrayObject.Property("announcement").Remove();
                 arrayObject.Property("is_completed").Remove();
                 arrayObject.Property("completed_on").Remove();
                 arrayObject.Property("suite_mode").Remove();
             }
-            return array.ToString();
+            return array;
         }
 
         private string ParsePlans(JArray array)
@@ -386,7 +433,56 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 Attachment attach = new Attachment();
                 attach.Title = jObj.Property("name").Value.ToString();
                 attach.TitleLink = jObj.Property("url").Value.ToString();
-                attach.Text = "ID=" + jObj.Property("id").Value.ToString() + "\n" + jObj.Property("description").Value.ToString();
+                attach.Text = "ID = " + jObj.Property("id").Value.ToString() + "\n" + jObj.Property("description").Value.ToString();
+                attachments.Add(attach);
+            }
+            return attachments;
+        }
+
+        private List<Attachment> CreateAttachmentsFromSuiteSearch(JArray array, string searchTerm)
+        {
+            List<Attachment> attachments = new List<Attachment>();
+            foreach (JObject jObj in array)
+            {
+                Attachment attach = new Attachment();
+                if (jObj.Property("name").Value.ToString().ToLower().Contains(searchTerm.ToLower()))
+                {
+                    attach.Title = jObj.Property("name").Value.ToString();
+                    attach.TitleLink = jObj.Property("url").Value.ToString();
+                    attach.Text = "ID = " + jObj.Property("id").Value.ToString() + "\n" + jObj.Property("description").Value.ToString();
+                    attachments.Add(attach);
+                }
+            }
+            return attachments;
+        }
+
+        private List<Attachment> CreateAttachmentsFromSuiteID(JObject jObj)
+        {
+            List<Attachment> attachments = new List<Attachment>();
+            Attachment attach = new Attachment();
+            attach.Title = jObj.Property("name").Value.ToString();
+            attach.TitleLink = jObj.Property("url").Value.ToString();
+            if (!string.IsNullOrEmpty(jObj.Property("description").Value.ToString()))
+            {
+                attach.Text = jObj.Property("description").Value.ToString();
+            }
+            else
+            {
+                attach.Text = "Description = null";
+            }
+            attachments.Add(attach);
+            return attachments;
+        }
+
+        private List<Attachment> CreateAttachmentsFromProjects(JArray array)
+        {
+            List<Attachment> attachments = new List<Attachment>();
+            foreach (JObject jObj in array)
+            {
+                Attachment attach = new Attachment();
+                attach.Title = jObj.Property("name").Value.ToString();
+                attach.TitleLink = jObj.Property("url").Value.ToString();
+                attach.Text = "ID = " + jObj.Property("id").Value.ToString();
                 attachments.Add(attach);
             }
             return attachments;
@@ -400,7 +496,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 Attachment attach = new Attachment();
                 attach.Title = jObj.Property("name").Value.ToString();
                 //attach.TitleLink = jObj.Property("url").Value.ToString();
-                attach.Text = "ID=" + jObj.Property("id").Value.ToString() + "\n" + jObj.Property("description").Value.ToString();
+                attach.Text = "ID = " + jObj.Property("id").Value.ToString() + "\n" + jObj.Property("description").Value.ToString();
                 attachments.Add(attach);
             }
             return attachments;
