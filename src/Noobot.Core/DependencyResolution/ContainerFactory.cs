@@ -108,6 +108,10 @@ namespace Noobot.Core.DependencyResolution
             {
                 registry.For<IMiddleware>().DecorateAllWith<TestrailMiddleware>();
             }
+            if (_configReader.HelloEnabled)
+            {
+                registry.For<IMiddleware>().DecorateAllWith<HelloMiddleware>();
+            }
 
             while (pipeline.Any())
             {

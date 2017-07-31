@@ -102,7 +102,6 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
         private IEnumerable<ResponseMessage> SuitesHandler(IncomingMessage message, IValidHandle matchedHandle)
         {
             string searchTerm = message.TargetedText.Substring("suites".Length).Trim();
-            //yield return message.ReplyDirectlyToUser("sophiadebug search term " + searchTerm);
 
             if (string.IsNullOrEmpty(searchTerm))
             {
@@ -238,7 +237,6 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
         private IEnumerable<ResponseMessage> SectionsHandler(IncomingMessage message, IValidHandle matchedHandle)
         {
             string searchTerm = message.TargetedText.Substring("sections".Length).Trim();
-            //yield return message.ReplyDirectlyToUser("sophiadebug search term " + searchTerm);
 
             if (string.IsNullOrEmpty(searchTerm))
             {
@@ -272,7 +270,6 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
         private IEnumerable<ResponseMessage> PlansHandler(IncomingMessage message, IValidHandle matchedHandle)
         {
             string searchTerm = message.TargetedText.Substring("plans".Length).Trim();
-            //yield return message.ReplyDirectlyToUser("sophiadebug search term " + searchTerm);
 
             if (string.IsNullOrEmpty(searchTerm))
             {
@@ -294,14 +291,13 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 {
                     responseFromAPI = e.ToString();
                 }
-                yield return message.ReplyDirectlyToUser(responseFromAPI);
+                yield return message.ReplyToChannel(responseFromAPI);
             }
         }
 
         private IEnumerable<ResponseMessage> RunsHandler(IncomingMessage message, IValidHandle matchedHandle)
         {
             string searchTerm = message.TargetedText.Substring("runs".Length).Trim();
-            //yield return message.ReplyDirectlyToUser("sophiadebug search term " + searchTerm);
 
             if (string.IsNullOrEmpty(searchTerm))
             {
@@ -322,14 +318,13 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 {
                     responseFromAPI = e.ToString();
                 }
-                yield return message.ReplyDirectlyToUser(responseFromAPI);
+                yield return message.ReplyToChannel(responseFromAPI);
             }
         }
 
         private IEnumerable<ResponseMessage> TestsHandler(IncomingMessage message, IValidHandle matchedHandle)
         {
             string searchTerm = message.TargetedText.Substring("tests".Length).Trim();
-            //yield return message.ReplyDirectlyToUser("sophiadebug search term " + searchTerm);
 
             if (string.IsNullOrEmpty(searchTerm))
             {
@@ -350,7 +345,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 {
                     responseFromAPI = e.ToString();
                 }
-                yield return message.ReplyDirectlyToUser(responseFromAPI);
+                yield return message.ReplyToChannel(responseFromAPI);
             }
         }
 
