@@ -25,20 +25,17 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
 
         public JArray ParseSuites(JArray array)
         {
-            foreach (JObject arrayObject in array)
+            for (int i = 0; i < array.Count; i++)
             {
-                arrayObject.Property("project_id").Remove();
-                arrayObject.Property("is_master").Remove();
-                arrayObject.Property("is_baseline").Remove();
-                arrayObject.Property("is_completed").Remove();
-                arrayObject.Property("completed_on").Remove();
+                JObject arrayObject = array[i].ToObject<JObject>();
+                arrayObject = ParseSuiteID(arrayObject);
             }
             return array;
         }
 
         public JObject ParseSuiteID(JObject jObj)
         {
-            jObj.Property("id").Remove();
+            //jObj.Property("id").Remove();
             jObj.Property("project_id").Remove();
             jObj.Property("is_master").Remove();
             jObj.Property("is_baseline").Remove();
@@ -60,50 +57,64 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
             return array;
         }
 
+        public JObject ParsePlan(JObject jObj)
+        {
+            jObj.Property("assignedto_id").Remove();
+            jObj.Property("is_completed").Remove();
+            jObj.Property("completed_on").Remove();
+            jObj.Property("blocked_count").Remove();
+            jObj.Property("retest_count").Remove();
+            jObj.Property("custom_status1_count").Remove();
+            jObj.Property("custom_status2_count").Remove();
+            jObj.Property("custom_status3_count").Remove();
+            jObj.Property("custom_status4_count").Remove();
+            jObj.Property("custom_status5_count").Remove();
+            jObj.Property("custom_status6_count").Remove();
+            jObj.Property("custom_status7_count").Remove();
+            jObj.Property("created_on").Remove();
+            jObj.Property("created_by").Remove();
+            return jObj;
+        }
+
         public JArray ParsePlans(JArray array)
         {
-            foreach (JObject arrayObject in array)
+            for (int i = 0; i < array.Count; i++)
             {
-                arrayObject.Property("assignedto_id").Remove();
-                arrayObject.Property("is_completed").Remove();
-                arrayObject.Property("completed_on").Remove();
-                arrayObject.Property("blocked_count").Remove();
-                arrayObject.Property("retest_count").Remove();
-                arrayObject.Property("custom_status1_count").Remove();
-                arrayObject.Property("custom_status2_count").Remove();
-                arrayObject.Property("custom_status3_count").Remove();
-                arrayObject.Property("custom_status4_count").Remove();
-                arrayObject.Property("custom_status5_count").Remove();
-                arrayObject.Property("custom_status6_count").Remove();
-                arrayObject.Property("custom_status7_count").Remove();
-                arrayObject.Property("created_on").Remove();
-                arrayObject.Property("created_by").Remove();
+                JObject arrayObject = array[i].ToObject<JObject>();
+                arrayObject = ParsePlan(arrayObject);
             }
             return array;
         }
 
+        public JObject ParseRun(JObject jObj)
+        {
+            jObj.Property("assignedto_id").Remove();
+            jObj.Property("config").Remove();
+            jObj.Property("config_ids").Remove();
+            jObj.Property("completed_on").Remove();
+            jObj.Property("blocked_count").Remove();
+            jObj.Property("retest_count").Remove();
+            jObj.Property("milestone_id").Remove();
+            jObj.Property("project_id").Remove();
+            jObj.Property("include_all").Remove();
+            jObj.Property("custom_status1_count").Remove();
+            jObj.Property("custom_status2_count").Remove();
+            jObj.Property("custom_status3_count").Remove();
+            jObj.Property("custom_status4_count").Remove();
+            jObj.Property("custom_status5_count").Remove();
+            jObj.Property("custom_status6_count").Remove();
+            jObj.Property("custom_status7_count").Remove();
+            jObj.Property("created_on").Remove();
+            jObj.Property("created_by").Remove();
+            return jObj;
+        }
+
         public JArray ParseRuns(JArray array)
         {
-            foreach (JObject arrayObject in array)
+            for (int i = 0; i < array.Count; i++)
             {
-                arrayObject.Property("assignedto_id").Remove();
-                arrayObject.Property("config").Remove();
-                arrayObject.Property("config_ids").Remove();
-                arrayObject.Property("completed_on").Remove();
-                arrayObject.Property("blocked_count").Remove();
-                arrayObject.Property("retest_count").Remove();
-                arrayObject.Property("milestone_id").Remove();
-                arrayObject.Property("project_id").Remove();
-                arrayObject.Property("include_all").Remove();
-                arrayObject.Property("custom_status1_count").Remove();
-                arrayObject.Property("custom_status2_count").Remove();
-                arrayObject.Property("custom_status3_count").Remove();
-                arrayObject.Property("custom_status4_count").Remove();
-                arrayObject.Property("custom_status5_count").Remove();
-                arrayObject.Property("custom_status6_count").Remove();
-                arrayObject.Property("custom_status7_count").Remove();
-                arrayObject.Property("created_on").Remove();
-                arrayObject.Property("created_by").Remove();
+                JObject arrayObject = array[i].ToObject<JObject>();
+                arrayObject = ParseRun(arrayObject);
             }
             return array;
         }
@@ -206,7 +217,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 Attachment attach = new Attachment();
                 attach.Title = jObj.Property("name").Value.ToString();
                 attach.TitleLink = jObj.Property("url").Value.ToString();
-                attach.Text = "Run ID = " + jObj.Property("id").Value.ToString() + "\n Plan ID = " + jObj.Property("plan_id").Value.ToString() + "\n Suite ID = " + jObj.Property("suite_id").Value.ToString() + "\n" + jObj.Property("description").Value.ToString() + "\n Is Completed: " + jObj.Property("is_completed").Value.ToString() + "\n Passed: " + jObj.Property("passed_count").Value.ToString() + "\n Failed: " + jObj.Property("failed_count").Value.ToString() + "\n Untested: " + jObj.Property("untested_count").Value.ToString();
+                attach.Text = "Run ID = " + jObj.Property("id").Value.ToString() + "\n Plan ID = " + jObj.Property("plan_id").Value.ToString() + "\n Suite ID = " + jObj.Property("suite_id").Value.ToString() + "\n Description: " + jObj.Property("description").Value.ToString() + "\n Is Completed: " + jObj.Property("is_completed").Value.ToString() + "\n Passed: " + jObj.Property("passed_count").Value.ToString() + "\n Failed: " + jObj.Property("failed_count").Value.ToString() + "\n Untested: " + jObj.Property("untested_count").Value.ToString();
                 attachments.Add(attach);
             }
             return attachments;

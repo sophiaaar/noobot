@@ -257,7 +257,6 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                     JArray c = (JArray)client.SendGet($"get_sections/{terms[0]}&suite_id={terms[1]}"); //need to get IDs first
                     JArray parsed = _parse.ParseSections(c);
                     listOfSectionAttachments = _parse.CreateAttachmentsFromSections(c);
-                    //responseFromAPI = parsed.ToString();
                     responseFromAPI = "";
                 }
                 catch (APIException e)
@@ -332,16 +331,41 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
             {
                 yield return message.IndicateTypingOnChannel();
                 APIClient client = ConnectToTestrail();
+                List<Attachment> runsAttachments = new List<Attachment>();
+                List<List<Attachment>> listOfLists = new List<List<Attachment>>();
                 string responseFromAPI = "";
 
                 try
                 {
                     JArray c = (JArray)client.SendGet($"get_runs/{searchTerm}");
-                    responseFromAPI = c.ToString();
+                    JArray parsed = _parse.ParseRuns(c);
+                    runsAttachments = _parse.CreateAttachmentsFromRuns(parsed);
+                    responseFromAPI = "";
                 }
                 catch (APIException e)
                 {
                     responseFromAPI = e.ToString();
+                }
+
+                if (runsAttachments.Count != 0)
+                {
+                    if (runsAttachments.Count > 10)
+                    {
+                        listOfLists = _parse.SplitList(runsAttachments, 9);
+                        foreach (List<Attachment> list in listOfLists)
+                        {
+                            yield return message.ReplyToChannel(responseFromAPI, list);
+                        }
+                        yield return message.ReplyToChannel(responseFromAPI, runsAttachments);
+                    }
+                    else
+                    {
+                        yield return message.ReplyToChannel(responseFromAPI, runsAttachments);
+                    }
+                }
+                else
+                {
+                    yield return message.ReplyToChannel(responseFromAPI);
                 }
                 yield return message.ReplyToChannel(responseFromAPI);
             }
