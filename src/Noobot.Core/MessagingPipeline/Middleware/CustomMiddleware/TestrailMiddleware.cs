@@ -76,10 +76,19 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 {
                     ValidHandles = new IValidHandle[]
                     {
-                        new StartsWithHandle("runs"),
+                        new StartsWithHandle("test_runs"),
                     },
-                    Description = "Lists all runs (that are not a part of a plan) within a Testrail project given a project ID eg runs 2",
+                    Description = "Lists all runs (that are not a part of a plan) within a Testrail project given a project ID eg test_runs 2",
                     EvaluatorFunc = RunsHandler
+                },
+                new HandlerMapping
+                {
+                    ValidHandles = new IValidHandle[]
+                    {
+                        new StartsWithHandle("run_report"),
+                    },
+                    Description = "Details a run of a given run ID eg run_report 2",
+                    EvaluatorFunc = RunHandler
                 },
                 new HandlerMapping
                 {
@@ -319,13 +328,43 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
             }
         }
 
-        private IEnumerable<ResponseMessage> RunsHandler(IncomingMessage message, IValidHandle matchedHandle)
+        private IEnumerable<ResponseMessage> RunHandler(IncomingMessage message, IValidHandle matchedHandle)
         {
-            string searchTerm = message.TargetedText.Substring("runs".Length).Trim();
+            string searchTerm = message.TargetedText.Substring("run_report".Length).Trim();
 
             if (string.IsNullOrEmpty(searchTerm))
             {
-                yield return message.ReplyToChannel("Give me something to search! runs [project_id] eg runs 1");
+                yield return message.ReplyToChannel("Give me something to search! runs [project_id] eg run_report 1");
+            }
+            else
+            {
+                yield return message.IndicateTypingOnChannel();
+                APIClient client = ConnectToTestrail();
+                List<Attachment> runAttachments = new List<Attachment>();
+                string responseFromAPI = "";
+
+                try
+                {
+                    JObject c = (JObject)client.SendGet($"get_run/{searchTerm}");
+                    JObject parsed = _parse.ParseRun(c);
+                    runAttachments = _parse.CreateAttachmentsFromRun(parsed);
+                    responseFromAPI = "";
+                }
+                catch (APIException e)
+                {
+                    responseFromAPI = e.ToString();
+                }
+                yield return message.ReplyToChannel(responseFromAPI, runAttachments);
+            }
+        }
+
+        private IEnumerable<ResponseMessage> RunsHandler(IncomingMessage message, IValidHandle matchedHandle)
+        {
+            string searchTerm = message.TargetedText.Substring("test_runs".Length).Trim();
+
+            if (string.IsNullOrEmpty(searchTerm))
+            {
+                yield return message.ReplyToChannel("Give me something to search! runs [project_id] eg test_runs 1");
             }
             else
             {

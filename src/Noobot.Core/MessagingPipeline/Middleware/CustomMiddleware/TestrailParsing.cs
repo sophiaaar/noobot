@@ -217,9 +217,34 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 Attachment attach = new Attachment();
                 attach.Title = jObj.Property("name").Value.ToString();
                 attach.TitleLink = jObj.Property("url").Value.ToString();
-                attach.Text = "Run ID = " + jObj.Property("id").Value.ToString() + "\n Plan ID = " + jObj.Property("plan_id").Value.ToString() + "\n Suite ID = " + jObj.Property("suite_id").Value.ToString() + "\n Description: " + jObj.Property("description").Value.ToString() + "\n Is Completed: " + jObj.Property("is_completed").Value.ToString() + "\n Passed: " + jObj.Property("passed_count").Value.ToString() + "\n Failed: " + jObj.Property("failed_count").Value.ToString() + "\n Untested: " + jObj.Property("untested_count").Value.ToString();
+                if (!string.IsNullOrEmpty(jObj.Property("plan_id").Value.ToString()))
+                {
+                    attach.Text = "Run ID = " + jObj.Property("id").Value.ToString() + "\n Plan ID = " + jObj.Property("plan_id").Value.ToString() + "\n Suite ID = " + jObj.Property("suite_id").Value.ToString() + "\n Description: " + jObj.Property("description").Value.ToString() + "\n Is Completed: " + jObj.Property("is_completed").Value.ToString() + "\n Passed: " + jObj.Property("passed_count").Value.ToString() + "\n Failed: " + jObj.Property("failed_count").Value.ToString() + "\n Untested: " + jObj.Property("untested_count").Value.ToString();
+                }
+                else
+                {
+                    attach.Text = "Run ID = " + jObj.Property("id").Value.ToString() + "\n Plan ID = Not part of a plan" + "\n Suite ID = " + jObj.Property("suite_id").Value.ToString() + "\n Description: " + jObj.Property("description").Value.ToString() + "\n Is Completed: " + jObj.Property("is_completed").Value.ToString() + "\n Passed: " + jObj.Property("passed_count").Value.ToString() + "\n Failed: " + jObj.Property("failed_count").Value.ToString() + "\n Untested: " + jObj.Property("untested_count").Value.ToString();
+                }
                 attachments.Add(attach);
             }
+            return attachments;
+        }
+
+        public List<Attachment> CreateAttachmentsFromRun(JObject jObj)
+        {
+            List<Attachment> attachments = new List<Attachment>();
+            Attachment attach = new Attachment();
+            attach.Title = jObj.Property("name").Value.ToString();
+            attach.TitleLink = jObj.Property("url").Value.ToString();
+            if (!string.IsNullOrEmpty(jObj.Property("plan_id").Value.ToString()))
+            {
+                attach.Text = "Run ID = " + jObj.Property("id").Value.ToString() + "\n Plan ID = " + jObj.Property("plan_id").Value.ToString() + "\n Suite ID = " + jObj.Property("suite_id").Value.ToString() + "\n Description: " + jObj.Property("description").Value.ToString() + "\n Is Completed: " + jObj.Property("is_completed").Value.ToString() + "\n Passed: " + jObj.Property("passed_count").Value.ToString() + "\n Failed: " + jObj.Property("failed_count").Value.ToString() + "\n Untested: " + jObj.Property("untested_count").Value.ToString();
+            }
+            else
+            {
+                attach.Text = "Run ID = " + jObj.Property("id").Value.ToString() + "\n Plan ID = Not part of a plan" + "\n Suite ID = " + jObj.Property("suite_id").Value.ToString() + "\n Description: " + jObj.Property("description").Value.ToString() + "\n Is Completed: " + jObj.Property("is_completed").Value.ToString() + "\n Passed: " + jObj.Property("passed_count").Value.ToString() + "\n Failed: " + jObj.Property("failed_count").Value.ToString() + "\n Untested: " + jObj.Property("untested_count").Value.ToString();
+            }
+            attachments.Add(attach);
             return attachments;
         }
 
