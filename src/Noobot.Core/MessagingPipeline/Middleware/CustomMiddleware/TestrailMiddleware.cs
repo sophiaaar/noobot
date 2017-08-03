@@ -12,6 +12,8 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
 {
     internal class TestrailMiddleware : MiddlewareBase
     {
+        TestrailParsing _parse = new TestrailParsing();
+
         public TestrailMiddleware(IMiddleware next) : base(next)
         {
             HandlerMappings = new[]
@@ -118,8 +120,8 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 try
                 {
                     JArray c = (JArray)client.SendGet($"get_suites/{searchTerm}");
-                    JArray parsed = ParseSuites(c);
-                    suiteAttachments = CreateAttachmentsFromSuites(parsed);
+                    JArray parsed = _parse.ParseSuites(c);
+                    suiteAttachments = _parse.CreateAttachmentsFromSuites(parsed);
                     responseFromAPI = "";
                 }
                 catch (APIException e)
@@ -130,7 +132,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 {
                     if (suiteAttachments.Count > 15)
                     {
-                        listOfLists = splitList(suiteAttachments, 14);
+                        listOfLists = _parse.SplitList(suiteAttachments, 14);
                         foreach (List<Attachment> list in listOfLists)
                         {
                             yield return message.ReplyToChannel(responseFromAPI, list);
@@ -168,8 +170,8 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 try
                 {
                     JObject c = (JObject)client.SendGet($"get_suite/{searchTerm}");
-                    JObject parsed = ParseSuiteID(c);
-                    suiteAttachments = CreateAttachmentsFromSuiteID(parsed);
+                    JObject parsed = _parse.ParseSuiteID(c);
+                    suiteAttachments = _parse.CreateAttachmentsFromSuiteID(parsed);
                     responseFromAPI = "";
                 }
                 catch (APIException e)
@@ -200,8 +202,8 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 {
                     //parse first
                     JArray c = (JArray)client.SendGet($"get_suites/{terms[0]}");
-                    JArray parsed = ParseSuites(c);
-                    suiteAttachments = CreateAttachmentsFromSuiteSearch(parsed, terms[1]);
+                    JArray parsed = _parse.ParseSuites(c);
+                    suiteAttachments = _parse.CreateAttachmentsFromSuiteSearch(parsed, terms[1]);
                     responseFromAPI = $"Here are the suites in project {terms[0]} containing the term \"{terms[1]}\": ";
                 }
                 catch (APIException e)
@@ -222,10 +224,9 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
             try
             { 
                 JArray c = (JArray)client.SendGet($"get_projects");
-                JArray parsed = ParseProjects(c);
-                projectAttachments = CreateAttachmentsFromProjects(parsed);
+                JArray parsed = _parse.ParseProjects(c);
+                projectAttachments = _parse.CreateAttachmentsFromProjects(parsed);
                 responseFromAPI = "";
-                //responseFromAPI = parsed + "\n I suggest pinning that message so you don't need to request it again!";
             }
             catch (APIException e)
             {
@@ -254,8 +255,8 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 try
                 {
                     JArray c = (JArray)client.SendGet($"get_sections/{terms[0]}&suite_id={terms[1]}"); //need to get IDs first
-                    JArray parsed = ParseSections(c);
-                    listOfSectionAttachments = CreateAttachmentsFromSections(c);
+                    JArray parsed = _parse.ParseSections(c);
+                    listOfSectionAttachments = _parse.CreateAttachmentsFromSections(c);
                     //responseFromAPI = parsed.ToString();
                     responseFromAPI = "";
                 }
@@ -279,17 +280,41 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
             {
                 yield return message.IndicateTypingOnChannel();
                 APIClient client = ConnectToTestrail();
+                List<Attachment> plansAttachments = new List<Attachment>();
+                List<List<Attachment>> listOfLists = new List<List<Attachment>>();
                 string responseFromAPI = "";
 
                 try
                 {
                     JArray c = (JArray)client.SendGet($"get_plans/{searchTerm}");
-                    string parsed = ParsePlans(c);
-                    responseFromAPI = parsed;
+                    JArray parsed = _parse.ParsePlans(c);
+                    plansAttachments = _parse.CreateAttachmentsFromPlans(parsed);
+                    responseFromAPI = "";
                 }
                 catch (APIException e)
                 {
                     responseFromAPI = e.ToString();
+                }
+
+                if (plansAttachments.Count != 0)
+                {
+                    if (plansAttachments.Count > 15)
+                    {
+                        listOfLists = _parse.SplitList(plansAttachments, 14);
+                        foreach (List<Attachment> list in listOfLists)
+                        {
+                            yield return message.ReplyToChannel(responseFromAPI, list);
+                        }
+                        yield return message.ReplyToChannel(responseFromAPI, plansAttachments);
+                    }
+                    else
+                    {
+                        yield return message.ReplyToChannel(responseFromAPI, plansAttachments);
+                    }
+                }
+                else
+                {
+                    yield return message.ReplyToChannel(responseFromAPI);
                 }
                 yield return message.ReplyToChannel(responseFromAPI);
             }
@@ -347,165 +372,6 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 }
                 yield return message.ReplyToChannel(responseFromAPI);
             }
-        }
-
-        private JArray ParseSections(JArray array)
-        {
-            foreach (JObject arrayObject in array)
-            {
-                arrayObject.Property("suite_id").Remove();
-                arrayObject.Property("parent_id").Remove();
-                arrayObject.Property("display_order").Remove();
-                arrayObject.Property("depth").Remove();
-            }            
-            return array;
-        }
-
-        private JArray ParseSuites(JArray array)
-        {
-            foreach (JObject arrayObject in array)
-            {
-                arrayObject.Property("project_id").Remove();
-                arrayObject.Property("is_master").Remove();
-                arrayObject.Property("is_baseline").Remove();
-                arrayObject.Property("is_completed").Remove();
-                arrayObject.Property("completed_on").Remove();
-            }
-            return array;
-        }
-
-        private JObject ParseSuiteID(JObject jObj)
-        {
-            jObj.Property("id").Remove();
-            jObj.Property("project_id").Remove();
-            jObj.Property("is_master").Remove();
-            jObj.Property("is_baseline").Remove();
-            jObj.Property("is_completed").Remove();
-            jObj.Property("completed_on").Remove();
-            return jObj;
-        }
-
-        private JArray ParseProjects(JArray array)
-        {
-            foreach (JObject arrayObject in array)
-            {
-                arrayObject.Property("show_announcement").Remove();
-                arrayObject.Property("announcement").Remove();
-                arrayObject.Property("is_completed").Remove();
-                arrayObject.Property("completed_on").Remove();
-                arrayObject.Property("suite_mode").Remove();
-            }
-            return array;
-        }
-
-        private string ParsePlans(JArray array)
-        {
-            foreach (JObject arrayObject in array)
-            {
-                arrayObject.Property("assignedto_id").Remove();
-                arrayObject.Property("is_completed").Remove();
-                arrayObject.Property("completed_on").Remove();
-                arrayObject.Property("blocked_count").Remove();
-                arrayObject.Property("retest_count").Remove();
-                arrayObject.Property("custom_status1_count").Remove();
-                arrayObject.Property("custom_status2_count").Remove();
-                arrayObject.Property("custom_status3_count").Remove();
-                arrayObject.Property("custom_status4_count").Remove();
-                arrayObject.Property("custom_status5_count").Remove();
-                arrayObject.Property("custom_status6_count").Remove();
-                arrayObject.Property("custom_status7_count").Remove();
-                arrayObject.Property("created_on").Remove();
-                arrayObject.Property("created_by").Remove();
-            }
-            return array.ToString();
-        }
-
-        private List<Attachment> CreateAttachmentsFromSuites(JArray array)
-        {
-            List<Attachment> attachments = new List<Attachment>();
-            foreach (JObject jObj in array)
-            {
-                Attachment attach = new Attachment();
-                attach.Title = jObj.Property("name").Value.ToString();
-                attach.TitleLink = jObj.Property("url").Value.ToString();
-                attach.Text = "ID = " + jObj.Property("id").Value.ToString() + "\n" + jObj.Property("description").Value.ToString();
-                attachments.Add(attach);
-            }
-            return attachments;
-        }
-
-        private List<Attachment> CreateAttachmentsFromSuiteSearch(JArray array, string searchTerm)
-        {
-            List<Attachment> attachments = new List<Attachment>();
-            foreach (JObject jObj in array)
-            {
-                Attachment attach = new Attachment();
-                if (jObj.Property("name").Value.ToString().ToLower().Contains(searchTerm.ToLower()))
-                {
-                    attach.Title = jObj.Property("name").Value.ToString();
-                    attach.TitleLink = jObj.Property("url").Value.ToString();
-                    attach.Text = "ID = " + jObj.Property("id").Value.ToString() + "\n" + jObj.Property("description").Value.ToString();
-                    attachments.Add(attach);
-                }
-            }
-            return attachments;
-        }
-
-        private List<Attachment> CreateAttachmentsFromSuiteID(JObject jObj)
-        {
-            List<Attachment> attachments = new List<Attachment>();
-            Attachment attach = new Attachment();
-            attach.Title = jObj.Property("name").Value.ToString();
-            attach.TitleLink = jObj.Property("url").Value.ToString();
-            if (!string.IsNullOrEmpty(jObj.Property("description").Value.ToString()))
-            {
-                attach.Text = jObj.Property("description").Value.ToString();
-            }
-            else
-            {
-                attach.Text = "Description = null";
-            }
-            attachments.Add(attach);
-            return attachments;
-        }
-
-        private List<Attachment> CreateAttachmentsFromProjects(JArray array)
-        {
-            List<Attachment> attachments = new List<Attachment>();
-            foreach (JObject jObj in array)
-            {
-                Attachment attach = new Attachment();
-                attach.Title = jObj.Property("name").Value.ToString();
-                attach.TitleLink = jObj.Property("url").Value.ToString();
-                attach.Text = "ID = " + jObj.Property("id").Value.ToString();
-                attachments.Add(attach);
-            }
-            return attachments;
-        }
-
-        private List<Attachment> CreateAttachmentsFromSections(JArray array)
-        {
-            List<Attachment> attachments = new List<Attachment>();
-            foreach (JObject jObj in array)
-            {
-                Attachment attach = new Attachment();
-                attach.Title = jObj.Property("name").Value.ToString();
-                //attach.TitleLink = jObj.Property("url").Value.ToString();
-                attach.Text = "ID = " + jObj.Property("id").Value.ToString() + "\n" + jObj.Property("description").Value.ToString();
-                attachments.Add(attach);
-            }
-            return attachments;
-        }
-
-        private List<List<Attachment>> splitList(List<Attachment> listOfAttachments, int nSize)
-        {
-            var list = new List<List<Attachment>>();
-
-            for (int i=0; i<listOfAttachments.Count; i += nSize)
-            {
-                list.Add(listOfAttachments.GetRange(i, Math.Min(nSize, listOfAttachments.Count - i)));
-            }
-            return list;
         }
     }
 }
