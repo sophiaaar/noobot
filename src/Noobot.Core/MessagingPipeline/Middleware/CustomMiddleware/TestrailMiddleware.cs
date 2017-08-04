@@ -94,6 +94,24 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 {
                     ValidHandles = new IValidHandle[]
                     {
+                        new StartsWithHandle("run_search"),
+                    },
+                    Description = "Lists runs within a project given a search term eg run_search 1 RAT",
+                    EvaluatorFunc = RunSearchHandler
+                },
+                new HandlerMapping
+                {
+                    ValidHandles = new IValidHandle[]
+                    {
+                        new StartsWithHandle("run_today"),
+                    },
+                    Description = "Lists runs within a project given a search term that were completed today eg run_today 1 RAT",
+                    EvaluatorFunc = RunTodayHandler
+                },
+                new HandlerMapping
+                {
+                    ValidHandles = new IValidHandle[]
+                    {
                         new StartsWithHandle("tests"),
                     },
                     Description = "Lists all tests for a test run eg tests 2",
@@ -205,7 +223,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 List<Attachment> suiteAttachments = new List<Attachment>();
                 string responseFromAPI = "";
 
-                string[] terms = searchTerm.Split(' ');
+                string[] terms = searchTerm.Split(new char[] { ' ' }, 2);
                 if (terms.Length == 1)
                 {
                     yield return message.ReplyToChannel("Searching requires a project id and search term! eg suite_search 1 animation");
@@ -266,7 +284,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 List<Attachment> sectionAttachments = new List<Attachment>();
                 List<List<Attachment>> listOfLists = new List<List<Attachment>>();
 
-                string[] terms = searchTerm.Split(' ');
+                string[] terms = searchTerm.Split(new char[] { ' ' }, 2);
                 if (terms.Length == 1)
                 {
                     yield return message.ReplyToChannel("Search using a project id and a suite id. eg sections [project_id] [suite_id] eg sections 1 1");
@@ -368,7 +386,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
 
             if (string.IsNullOrEmpty(searchTerm))
             {
-                yield return message.ReplyToChannel("Give me something to search! runs [project_id] eg run_report 1");
+                yield return message.ReplyToChannel("Give me something to search! run_report [project_id] eg run_report 1");
             }
             else
             {
@@ -389,6 +407,128 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                     responseFromAPI = e.ToString();
                 }
                 yield return message.ReplyToChannel(responseFromAPI, runAttachments);
+            }
+        }
+
+        private IEnumerable<ResponseMessage> RunSearchHandler(IncomingMessage message, IValidHandle matchedHandle)
+        {
+            string searchTerm = message.TargetedText.Substring("run_search".Length).Trim();
+
+            if (string.IsNullOrEmpty(searchTerm))
+            {
+                yield return message.ReplyToChannel("Give me something to search! run_search [project_id] [search term] eg run_search 1 RAT");
+            }
+            else
+            {
+                yield return message.IndicateTypingOnChannel();
+                APIClient client = ConnectToTestrail();
+                List<Attachment> runSearchAttachments = new List<Attachment>();
+                List<List<Attachment>> listOfLists = new List<List<Attachment>>();
+                string responseFromAPI = "";
+
+                string[] terms = searchTerm.Split(new char[] { ' ' }, 2);
+                if (terms.Length == 1)
+                {
+                    yield return message.ReplyToChannel("Searching requires a project id and search term! eg run_search 1 animation");
+                }
+                else
+                {
+                    try
+                    {
+                        //parse first
+                        JArray c = (JArray)client.SendGet($"get_runs/{terms[0]}");
+                        JArray parsed = _parse.ParseRuns(c);
+                        runSearchAttachments = _parse.CreateAttachmentsFromRunSearch(parsed, terms[1]);
+                        responseFromAPI = $"Here are the runs in project {terms[0]} containing the term \"{terms[1]}\": ";
+                    }
+                    catch (APIException e)
+                    {
+                        responseFromAPI = e.ToString();
+                    }
+                    //yield return message.ReplyToChannel(responseFromAPI, runSearchAttachments);
+                    if (runSearchAttachments.Count != 0)
+                    {
+                        if (runSearchAttachments.Count > 6)
+                        {
+                            listOfLists = _parse.SplitList(runSearchAttachments, 5);
+                            foreach (List<Attachment> list in listOfLists)
+                            {
+                                yield return message.ReplyToChannel(responseFromAPI, list);
+                            }
+                            yield return message.ReplyToChannel(responseFromAPI, runSearchAttachments);
+                        }
+                        else
+                        {
+                            yield return message.ReplyToChannel(responseFromAPI, runSearchAttachments);
+                        }
+                    }
+                    else
+                    {
+                        yield return message.ReplyToChannel(responseFromAPI);
+                    }
+                    //yield return message.ReplyToChannel(responseFromAPI);
+                }
+            }
+        }
+
+        private IEnumerable<ResponseMessage> RunTodayHandler(IncomingMessage message, IValidHandle matchedHandle)
+        {
+            string searchTerm = message.TargetedText.Substring("run_today".Length).Trim();
+
+            if (string.IsNullOrEmpty(searchTerm))
+            {
+                yield return message.ReplyToChannel("Give me something to search! run_today [project_id] [search term] eg run_today 1 RAT");
+            }
+            else
+            {
+                yield return message.IndicateTypingOnChannel();
+                APIClient client = ConnectToTestrail();
+                List<Attachment> runTodayAttachments = new List<Attachment>();
+                List<List<Attachment>> listOfLists = new List<List<Attachment>>();
+                string responseFromAPI = "";
+
+                string[] terms = searchTerm.Split(new char[] { ' ' }, 2);
+                if (terms.Length == 1)
+                {
+                    yield return message.ReplyToChannel("Searching requires a project id and search term! eg run_today 1 animation");
+                }
+                else
+                {
+                    try
+                    {
+                        //parse first
+                        JArray c = (JArray)client.SendGet($"get_runs/{terms[0]}");
+                        JArray parsed = _parse.ParseRuns(c);
+                        runTodayAttachments = _parse.CreateAttachmentsFromRunToday(parsed, terms[1]);
+                        responseFromAPI = $"Here are the runs from today in project {terms[0]} containing the term \"{terms[1]}\": ";
+                    }
+                    catch (APIException e)
+                    {
+                        responseFromAPI = e.ToString();
+                    }
+                    //yield return message.ReplyToChannel(responseFromAPI, runSearchAttachments);
+                    if (runTodayAttachments.Count != 0)
+                    {
+                        if (runTodayAttachments.Count > 6)
+                        {
+                            listOfLists = _parse.SplitList(runTodayAttachments, 5);
+                            foreach (List<Attachment> list in listOfLists)
+                            {
+                                yield return message.ReplyToChannel(responseFromAPI, list);
+                            }
+                            yield return message.ReplyToChannel(responseFromAPI, runTodayAttachments);
+                        }
+                        else
+                        {
+                            yield return message.ReplyToChannel(responseFromAPI, runTodayAttachments);
+                        }
+                    }
+                    else
+                    {
+                        yield return message.ReplyToChannel(responseFromAPI);
+                    }
+                    //yield return message.ReplyToChannel(responseFromAPI);
+                }
             }
         }
 
