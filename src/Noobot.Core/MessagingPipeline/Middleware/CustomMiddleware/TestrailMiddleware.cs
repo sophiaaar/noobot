@@ -206,20 +206,26 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 string responseFromAPI = "";
 
                 string[] terms = searchTerm.Split(' ');
-
-                try
+                if (terms.Length == 1)
                 {
-                    //parse first
-                    JArray c = (JArray)client.SendGet($"get_suites/{terms[0]}");
-                    JArray parsed = _parse.ParseSuites(c);
-                    suiteAttachments = _parse.CreateAttachmentsFromSuiteSearch(parsed, terms[1]);
-                    responseFromAPI = $"Here are the suites in project {terms[0]} containing the term \"{terms[1]}\": ";
+                    yield return message.ReplyToChannel("Searching requires a project id and search term! eg suite_search 1 animation");
                 }
-                catch (APIException e)
+                else
                 {
-                    responseFromAPI = e.ToString();
+                    try
+                    {
+                        //parse first
+                        JArray c = (JArray)client.SendGet($"get_suites/{terms[0]}");
+                        JArray parsed = _parse.ParseSuites(c);
+                        suiteAttachments = _parse.CreateAttachmentsFromSuiteSearch(parsed, terms[1]);
+                        responseFromAPI = $"Here are the suites in project {terms[0]} containing the term \"{terms[1]}\": ";
+                    }
+                    catch (APIException e)
+                    {
+                        responseFromAPI = e.ToString();
+                    }
+                    yield return message.ReplyToChannel(responseFromAPI, suiteAttachments);
                 }
-                yield return message.ReplyToChannel(responseFromAPI, suiteAttachments);
             }
         }
 
@@ -250,7 +256,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
 
             if (string.IsNullOrEmpty(searchTerm))
             {
-                yield return message.ReplyToChannel("Give me something to search! Needs to be a suite_id within the Unity project. sections [project_id] [suite_id] eg sections 1 1");
+                yield return message.ReplyToChannel("Give me something to search! eg sections [project_id] [suite_id] eg sections 1 1");
             }
             else
             {
@@ -261,39 +267,46 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 List<List<Attachment>> listOfLists = new List<List<Attachment>>();
 
                 string[] terms = searchTerm.Split(' ');
-
-                try
+                if (terms.Length == 1)
                 {
-                    JArray c = (JArray)client.SendGet($"get_sections/{terms[0]}&suite_id={terms[1]}"); //need to get IDs first
-                    JArray parsed = _parse.ParseSections(c);
-                    sectionAttachments = _parse.CreateAttachmentsFromSections(c);
-                    responseFromAPI = "";
-                }
-                catch (APIException e)
-                {
-                    responseFromAPI = e.ToString();
-                }
-                if (sectionAttachments.Count != 0)
-                {
-                    if (sectionAttachments.Count > 10)
-                    {
-                        listOfLists = _parse.SplitList(sectionAttachments, 9);
-                        foreach (List<Attachment> list in listOfLists)
-                        {
-                            yield return message.ReplyToChannel(responseFromAPI, list);
-                        }
-                        yield return message.ReplyToChannel(responseFromAPI, sectionAttachments);
-                    }
-                    else
-                    {
-                        yield return message.ReplyToChannel(responseFromAPI, sectionAttachments);
-                    }
+                    yield return message.ReplyToChannel("Search using a project id and a suite id. eg sections [project_id] [suite_id] eg sections 1 1");
                 }
                 else
                 {
-                    yield return message.ReplyToChannel(responseFromAPI);
+
+                    try
+                    {
+                        JArray c = (JArray)client.SendGet($"get_sections/{terms[0]}&suite_id={terms[1]}"); //need to get IDs first
+                        JArray parsed = _parse.ParseSections(c);
+                        sectionAttachments = _parse.CreateAttachmentsFromSections(c);
+                        responseFromAPI = "";
+                    }
+                    catch (APIException e)
+                    {
+                        responseFromAPI = e.ToString();
+                    }
+                    if (sectionAttachments.Count != 0)
+                    {
+                        if (sectionAttachments.Count > 10)
+                        {
+                            listOfLists = _parse.SplitList(sectionAttachments, 9);
+                            foreach (List<Attachment> list in listOfLists)
+                            {
+                                yield return message.ReplyToChannel(responseFromAPI, list);
+                            }
+                            yield return message.ReplyToChannel(responseFromAPI, sectionAttachments);
+                        }
+                        else
+                        {
+                            yield return message.ReplyToChannel(responseFromAPI, sectionAttachments);
+                        }
+                    }
+                    else
+                    {
+                        yield return message.ReplyToChannel(responseFromAPI);
+                    }
+                    //yield return message.ReplyToChannel(responseFromAPI);
                 }
-                //yield return message.ReplyToChannel(responseFromAPI);
             }
         }
 
