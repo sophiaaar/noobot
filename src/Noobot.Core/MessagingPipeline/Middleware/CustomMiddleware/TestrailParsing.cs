@@ -127,7 +127,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 Attachment attach = new Attachment();
                 attach.Title = jObj.Property("name").Value.ToString();
                 attach.TitleLink = jObj.Property("url").Value.ToString();
-                attach.Text = "ID = " + jObj.Property("id").Value.ToString() + "\n" + jObj.Property("description").Value.ToString();
+                attach.Text = "Suite ID = " + jObj.Property("id").Value.ToString() + "\n" + jObj.Property("description").Value.ToString();
                 attachments.Add(attach);
             }
             return attachments;
@@ -143,7 +143,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 {
                     attach.Title = jObj.Property("name").Value.ToString();
                     attach.TitleLink = jObj.Property("url").Value.ToString();
-                    attach.Text = "ID = " + jObj.Property("id").Value.ToString() + "\n" + jObj.Property("description").Value.ToString();
+                    attach.Text = "Suite ID = " + jObj.Property("id").Value.ToString() + "\n" + jObj.Property("description").Value.ToString();
                     attachments.Add(attach);
                 }
             }
@@ -156,14 +156,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
             Attachment attach = new Attachment();
             attach.Title = jObj.Property("name").Value.ToString();
             attach.TitleLink = jObj.Property("url").Value.ToString();
-            if (!string.IsNullOrEmpty(jObj.Property("description").Value.ToString()))
-            {
-                attach.Text = jObj.Property("description").Value.ToString();
-            }
-            else
-            {
-                attach.Text = "Description = null";
-            }
+            attach.Text = jObj.Property("description").Value.ToString();
             attachments.Add(attach);
             return attachments;
         }
@@ -176,7 +169,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 Attachment attach = new Attachment();
                 attach.Title = jObj.Property("name").Value.ToString();
                 attach.TitleLink = jObj.Property("url").Value.ToString();
-                attach.Text = "ID = " + jObj.Property("id").Value.ToString();
+                attach.Text = "Project ID = " + jObj.Property("id").Value.ToString();
                 attachments.Add(attach);
             }
             return attachments;
@@ -190,7 +183,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 Attachment attach = new Attachment();
                 attach.Title = jObj.Property("name").Value.ToString();
                 //attach.TitleLink = jObj.Property("url").Value.ToString();
-                attach.Text = "ID = " + jObj.Property("id").Value.ToString() + "\n" + jObj.Property("description").Value.ToString();
+                attach.Text = "Section ID = " + jObj.Property("id").Value.ToString() + "\n" + jObj.Property("description").Value.ToString();
                 attachments.Add(attach);
             }
             return attachments;
@@ -203,7 +196,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 Attachment attach = new Attachment();
                 attach.Title = jObj.Property("name").Value.ToString();
                 attach.TitleLink = jObj.Property("url").Value.ToString();
-                attach.Text = "ID = " + jObj.Property("id").Value.ToString() + "\n" + jObj.Property("description").Value.ToString() + "\n" + "Passed: " + jObj.Property("passed_count").Value.ToString() + "\n" + "Failed: " + jObj.Property("failed_count").Value.ToString() + "\n" + "Untested: " + jObj.Property("untested_count").Value.ToString();
+                attach.Text = "Plan ID = " + jObj.Property("id").Value.ToString() + "\n" + jObj.Property("description").Value.ToString() + "\n" + "Passed: " + jObj.Property("passed_count").Value.ToString() + "\n" + "Failed: " + jObj.Property("failed_count").Value.ToString() + "\n" + "Untested: " + jObj.Property("untested_count").Value.ToString();
                 attachments.Add(attach);
             }
             return attachments;
