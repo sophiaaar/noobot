@@ -10,7 +10,7 @@ namespace Noobot.Core.Configuration
         private JObject _currentJObject;
         private readonly string _configLocation;
         private readonly object _lock = new object();
-        private const string DEFAULT_LOCATION = @"configuration\config.json";
+        private const string DEFAULT_LOCATION = @"configuration/config.json"; //TODO - figure out how to make this work for mac and pc!
         private const string SLACKAPI_CONFIGVALUE = "slack:apiToken";
 
         public ConfigReader() : this(DEFAULT_LOCATION) { }
