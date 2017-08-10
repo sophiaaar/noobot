@@ -112,6 +112,15 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 {
                     ValidHandles = new IValidHandle[]
                     {
+                        new StartsWithHandle("close_run"),
+                    },
+                    Description = "Closes the run and displays result. eg close_run 1",
+                    EvaluatorFunc = CloseRunHandler
+                },
+                new HandlerMapping
+                {
+                    ValidHandles = new IValidHandle[]
+                    {
                         new StartsWithHandle("tests"),
                     },
                     Description = "Lists all tests for a test run eg tests 2",
@@ -386,7 +395,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
 
             if (string.IsNullOrEmpty(searchTerm))
             {
-                yield return message.ReplyToChannel("Give me something to search! run_report [project_id] eg run_report 1");
+                yield return message.ReplyToChannel("Give me something to search! run_report [run_id] eg run_report 1");
             }
             else
             {
@@ -581,6 +590,36 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                     yield return message.ReplyToChannel(responseFromAPI);
                 }
                 yield return message.ReplyToChannel(responseFromAPI);
+            }
+        }
+
+        private IEnumerable<ResponseMessage> CloseRunHandler(IncomingMessage message, IValidHandle matchedHandle)
+        {
+            string searchTerm = message.TargetedText.Substring("close_run".Length).Trim();
+
+            if (string.IsNullOrEmpty(searchTerm))
+            {
+                yield return message.ReplyToChannel("Give me something to search! close_run [run_id] eg close_run 1");
+            }
+            else
+            {
+                yield return message.IndicateTypingOnChannel();
+                APIClient client = ConnectToTestrail();
+                List<Attachment> runAttachments = new List<Attachment>();
+                string responseFromAPI = "";
+
+                try
+                {
+                    JObject c = (JObject)client.SendGet($"close_run/{searchTerm}");
+                    JObject parsed = _parse.ParseRun(c);
+                    runAttachments = _parse.CreateAttachmentsFromRun(parsed);
+                    responseFromAPI = "";
+                }
+                catch (APIException e)
+                {
+                    responseFromAPI = e.ToString();
+                }
+                yield return message.ReplyToChannel(responseFromAPI, runAttachments);
             }
         }
 
