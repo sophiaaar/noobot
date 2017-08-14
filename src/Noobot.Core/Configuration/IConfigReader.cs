@@ -10,6 +10,9 @@
         /// </summary>
         string SlackApiKey { get; }
 
+        string TestRailUser { get; }
+        string TestRailPass { get; }
+
         /// <summary>
         /// Should the "help" middleware be used?
         /// </summary>

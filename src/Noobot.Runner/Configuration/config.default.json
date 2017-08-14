@@ -2,6 +2,8 @@
   "logFile": "log.txt",
   "adminPin": 0,
   "slack:apiToken": "",
+  "testrail:user": "",
+  "testrail:password": "",
   "flickr:apiKey": "",
   "flickr:apiSecret": ""
 }

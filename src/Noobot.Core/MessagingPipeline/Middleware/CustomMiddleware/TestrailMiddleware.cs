@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Noobot.Core.MessagingPipeline.Middleware.ValidHandles;
 using Noobot.Core.MessagingPipeline.Request;
 using Noobot.Core.MessagingPipeline.Response;
+using Noobot.Core.Configuration;
 using Gurock.TestRail;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -13,6 +14,8 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
     internal class TestrailMiddleware : MiddlewareBase
     {
         TestrailParsing _parse = new TestrailParsing();
+        private readonly IConfigReader _configReader = new ConfigReader();
+               
 
         public TestrailMiddleware(IMiddleware next) : base(next)
         {
@@ -132,8 +135,8 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
         private APIClient ConnectToTestrail()
         {
             APIClient client = new APIClient("http://qatestrail.hq.unity3d.com");
-            client.User = ""; //TODO - make this able to log in via slack?
-            client.Password = ""; //store this in a config file sophiadebug
+            client.User = _configReader.TestRailUser;
+            client.Password = _configReader.TestRailPass;
             return client;
         }
 
