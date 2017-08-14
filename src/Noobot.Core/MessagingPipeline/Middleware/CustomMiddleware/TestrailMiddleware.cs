@@ -305,7 +305,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                     {
                         JArray c = (JArray)client.SendGet($"get_sections/{terms[0]}&suite_id={terms[1]}"); //need to get IDs first
                         JArray parsed = _parse.ParseSections(c);
-                        sectionAttachments = _parse.CreateAttachmentsFromSections(c);
+                        sectionAttachments = _parse.CreateAttachmentsFromSections(parsed);
                         responseFromAPI = "";
                     }
                     catch (APIException e)
@@ -610,9 +610,20 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
 
                 try
                 {
-                    JObject c = (JObject)client.SendGet($"close_run/{searchTerm}");
-                    JObject parsed = _parse.ParseRun(c);
-                    runAttachments = _parse.CreateAttachmentsFromRun(parsed);
+                    JObject jObjRun = (JObject)client.SendPost($"close_run/{searchTerm}", null);
+                    JObject parsedRun = _parse.ParseRun(jObjRun);
+
+					string project_id = parsedRun.Property("project_id").Value.ToString();
+					string suite_id = parsedRun.Property("suite_id").Value.ToString();
+					JArray jArrSections = (JArray)client.SendGet($"get_sections/{project_id}&suite_id={suite_id}");
+                    JArray parsedSections = _parse.ParseSectionGetName(jArrSections);
+
+                    runAttachments = _parse.CreateAttachmentsFromCloseRun(parsedRun, parsedSections);
+
+					//JArray c = (JArray)client.SendGet($"get_sections/{terms[0]}&suite_id={terms[1]}"); //need to get IDs first
+					//JArray parsed = _parse.ParseSections(c);
+					//sectionAttachments = _parse.CreateAttachmentsFromSections(c);
+
                     responseFromAPI = "";
                 }
                 catch (APIException e)

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using Noobot.Core.MessagingPipeline.Middleware.ValidHandles;
 using Noobot.Core.MessagingPipeline.Request;
 using Noobot.Core.MessagingPipeline.Response;
@@ -22,6 +23,20 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
             }            
             return array;
         }
+
+		public JArray ParseSectionGetName(JArray array)
+		{
+			foreach (JObject arrayObject in array)
+			{
+				arrayObject.Property("suite_id").Remove();
+				arrayObject.Property("parent_id").Remove();
+				arrayObject.Property("display_order").Remove();
+				arrayObject.Property("depth").Remove();
+                arrayObject.Property("description").Remove();
+                arrayObject.Property("id").Remove();
+			}
+			return array;
+		}
 
         public JArray ParseSuites(JArray array)
         {
@@ -95,7 +110,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
             jObj.Property("blocked_count").Remove();
             jObj.Property("retest_count").Remove();
             jObj.Property("milestone_id").Remove();
-            jObj.Property("project_id").Remove();
+            //jObj.Property("project_id").Remove();
             jObj.Property("include_all").Remove();
             jObj.Property("custom_status1_count").Remove();
             jObj.Property("custom_status2_count").Remove();
@@ -188,6 +203,21 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
             }
             return attachments;
         }
+
+		public List<Attachment> CreateAttachmentsFromSectionsNames(JArray array)
+		{
+			List<Attachment> attachments = new List<Attachment>();
+			foreach (JObject jObj in array)
+			{
+				Attachment attach = new Attachment();
+				attach.Text = jObj.Property("name").Value.ToString();
+				//attach.TitleLink = jObj.Property("url").Value.ToString();
+				//attach.Text = "Section ID = " + jObj.Property("id").Value.ToString() + "\n" + jObj.Property("description").Value.ToString();
+				attachments.Add(attach);
+			}
+			return attachments;
+		}
+
         public List<Attachment> CreateAttachmentsFromPlans(JArray array)
         {
             List<Attachment> attachments = new List<Attachment>();
@@ -240,6 +270,39 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
             attachments.Add(attach);
             return attachments;
         }
+
+        public List<Attachment> CreateAttachmentsFromCloseRun(JObject jObj, JArray jArr)
+		{
+			List<Attachment> attachments = new List<Attachment>();
+			Attachment attach = new Attachment();
+
+            List<string> sectionNames = new List<string>();
+            foreach (JObject obj in jArr)
+            {
+                sectionNames.Add(obj.Property("name").Value.ToString());
+            }
+
+            StringBuilder builder = new StringBuilder();
+            foreach (string sectionName in sectionNames)
+            {
+                builder.Append(sectionName).Append("\n");
+            }
+
+            Attachment sectionAttachment = new Attachment();
+
+            sectionAttachment.Title = "Sections covered in this run:";
+            sectionAttachment.Text = builder.ToString();
+
+			attach.Title = jObj.Property("name").Value.ToString();
+			attach.TitleLink = jObj.Property("url").Value.ToString();
+
+
+			attach.Text = "Run ID = " + jObj.Property("id").Value.ToString() + "\n Suite ID = " + jObj.Property("suite_id").Value.ToString() + "\n Description: " + jObj.Property("description").Value.ToString() + "\n Is Completed: " + jObj.Property("is_completed").Value.ToString() + "\n Passed: " + jObj.Property("passed_count").Value.ToString() + "\n Failed: " + jObj.Property("failed_count").Value.ToString() + "\n Untested: " + jObj.Property("untested_count").Value.ToString();
+
+			attachments.Add(attach);
+            attachments.Add(sectionAttachment);
+			return attachments;
+		}
 
         public List<Attachment> CreateAttachmentsFromRunSearch(JArray array, string searchTerm)
         {
