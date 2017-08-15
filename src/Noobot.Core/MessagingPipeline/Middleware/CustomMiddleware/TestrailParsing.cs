@@ -226,7 +226,15 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 Attachment attach = new Attachment();
                 attach.Title = jObj.Property("name").Value.ToString();
                 attach.TitleLink = jObj.Property("url").Value.ToString();
-                attach.Text = "Plan ID = " + jObj.Property("id").Value.ToString() + "\n" + jObj.Property("description").Value.ToString() + "\n" + "Passed: " + jObj.Property("passed_count").Value.ToString() + "\n" + "Failed: " + jObj.Property("failed_count").Value.ToString() + "\n" + "Untested: " + jObj.Property("untested_count").Value.ToString();
+
+                StringBuilder builder = new StringBuilder();
+                builder.Append("Plan ID: ").Append(jObj.Property("id").Value.ToString()).Append("\n");
+                builder.Append(jObj.Property("description").Value.ToString()).Append("\n");
+                builder.Append("Passed: ").Append(jObj.Property("passed_count").Value.ToString()).Append("\n");
+                builder.Append("Failed: ").Append(jObj.Property("failed_count").Value.ToString()).Append("\n");
+                builder.Append("Untested: ").Append(jObj.Property("untested_count").Value.ToString());
+
+                attach.Text = builder.ToString();
                 attachments.Add(attach);
             }
             return attachments;
@@ -240,14 +248,8 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 Attachment attach = new Attachment();
                 attach.Title = jObj.Property("name").Value.ToString();
                 attach.TitleLink = jObj.Property("url").Value.ToString();
-                if (!string.IsNullOrEmpty(jObj.Property("plan_id").Value.ToString()))
-                {
-                    attach.Text = "Run ID = " + jObj.Property("id").Value.ToString() + "\n Plan ID = " + jObj.Property("plan_id").Value.ToString() + "\n Suite ID = " + jObj.Property("suite_id").Value.ToString() + "\n Description: " + jObj.Property("description").Value.ToString() + "\n Is Completed: " + jObj.Property("is_completed").Value.ToString() + "\n Passed: " + jObj.Property("passed_count").Value.ToString() + "\n Failed: " + jObj.Property("failed_count").Value.ToString() + "\n Untested: " + jObj.Property("untested_count").Value.ToString();
-                }
-                else
-                {
-                    attach.Text = "Run ID = " + jObj.Property("id").Value.ToString() + "\n Plan ID = Not part of a plan" + "\n Suite ID = " + jObj.Property("suite_id").Value.ToString() + "\n Description: " + jObj.Property("description").Value.ToString() + "\n Is Completed: " + jObj.Property("is_completed").Value.ToString() + "\n Passed: " + jObj.Property("passed_count").Value.ToString() + "\n Failed: " + jObj.Property("failed_count").Value.ToString() + "\n Untested: " + jObj.Property("untested_count").Value.ToString();
-                }
+                attach.Text = RunText(jObj);
+
                 attachments.Add(attach);
             }
             return attachments;
@@ -259,14 +261,8 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
             Attachment attach = new Attachment();
             attach.Title = jObj.Property("name").Value.ToString();
             attach.TitleLink = jObj.Property("url").Value.ToString();
-            if (!string.IsNullOrEmpty(jObj.Property("plan_id").Value.ToString()))
-            {
-                attach.Text = "Run ID = " + jObj.Property("id").Value.ToString() + "\n Plan ID = " + jObj.Property("plan_id").Value.ToString() + "\n Suite ID = " + jObj.Property("suite_id").Value.ToString() + "\n Description: " + jObj.Property("description").Value.ToString() + "\n Is Completed: " + jObj.Property("is_completed").Value.ToString() + "\n Passed: " + jObj.Property("passed_count").Value.ToString() + "\n Failed: " + jObj.Property("failed_count").Value.ToString() + "\n Untested: " + jObj.Property("untested_count").Value.ToString();
-            }
-            else
-            {
-                attach.Text = "Run ID = " + jObj.Property("id").Value.ToString() + "\n Plan ID = Not part of a plan" + "\n Suite ID = " + jObj.Property("suite_id").Value.ToString() + "\n Description: " + jObj.Property("description").Value.ToString() + "\n Is Completed: " + jObj.Property("is_completed").Value.ToString() + "\n Passed: " + jObj.Property("passed_count").Value.ToString() + "\n Failed: " + jObj.Property("failed_count").Value.ToString() + "\n Untested: " + jObj.Property("untested_count").Value.ToString();
-            }
+            attach.Text = RunText(jObj);
+
             attachments.Add(attach);
             return attachments;
         }
@@ -295,9 +291,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
 
 			attach.Title = jObj.Property("name").Value.ToString();
 			attach.TitleLink = jObj.Property("url").Value.ToString();
-
-
-			attach.Text = "Run ID = " + jObj.Property("id").Value.ToString() + "\n Suite ID = " + jObj.Property("suite_id").Value.ToString() + "\n Description: " + jObj.Property("description").Value.ToString() + "\n Is Completed: " + jObj.Property("is_completed").Value.ToString() + "\n Passed: " + jObj.Property("passed_count").Value.ToString() + "\n Failed: " + jObj.Property("failed_count").Value.ToString() + "\n Untested: " + jObj.Property("untested_count").Value.ToString();
+			attach.Text = RunText(jObj);
 
 			attachments.Add(attach);
             attachments.Add(sectionAttachment);
@@ -314,14 +308,8 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 {
                     attach.Title = jObj.Property("name").Value.ToString();
                     attach.TitleLink = jObj.Property("url").Value.ToString();
-                    if (!string.IsNullOrEmpty(jObj.Property("plan_id").Value.ToString()))
-                    {
-                        attach.Text = "Run ID = " + jObj.Property("id").Value.ToString() + "\n Plan ID = " + jObj.Property("plan_id").Value.ToString() + "\n Suite ID = " + jObj.Property("suite_id").Value.ToString() + "\n Description: " + jObj.Property("description").Value.ToString() + "\n Is Completed: " + jObj.Property("is_completed").Value.ToString() + "\n Passed: " + jObj.Property("passed_count").Value.ToString() + "\n Failed: " + jObj.Property("failed_count").Value.ToString() + "\n Untested: " + jObj.Property("untested_count").Value.ToString();
-                    }
-                    else
-                    {
-                        attach.Text = "Run ID = " + jObj.Property("id").Value.ToString() + "\n Plan ID = Not part of a plan" + "\n Suite ID = " + jObj.Property("suite_id").Value.ToString() + "\n Description: " + jObj.Property("description").Value.ToString() + "\n Is Completed: " + jObj.Property("is_completed").Value.ToString() + "\n Passed: " + jObj.Property("passed_count").Value.ToString() + "\n Failed: " + jObj.Property("failed_count").Value.ToString() + "\n Untested: " + jObj.Property("untested_count").Value.ToString();
-                    }
+                    attach.Text = RunText(jObj);
+
                     attachments.Add(attach);
                 }
             }
@@ -342,14 +330,8 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                     {
                         attach.Title = jObj.Property("name").Value.ToString();
                         attach.TitleLink = jObj.Property("url").Value.ToString();
-                        if (!string.IsNullOrEmpty(jObj.Property("plan_id").Value.ToString()))
-                        {
-                            attach.Text = "Run ID = " + jObj.Property("id").Value.ToString() + "\n Plan ID = " + jObj.Property("plan_id").Value.ToString() + "\n Suite ID = " + jObj.Property("suite_id").Value.ToString() + "\n Description: " + jObj.Property("description").Value.ToString() + "\n Is Completed: " + jObj.Property("is_completed").Value.ToString() + "\n Passed: " + jObj.Property("passed_count").Value.ToString() + "\n Failed: " + jObj.Property("failed_count").Value.ToString() + "\n Untested: " + jObj.Property("untested_count").Value.ToString();
-                        }
-                        else
-                        {
-                            attach.Text = "Run ID = " + jObj.Property("id").Value.ToString() + "\n Plan ID = Not part of a plan" + "\n Suite ID = " + jObj.Property("suite_id").Value.ToString() + "\n Description: " + jObj.Property("description").Value.ToString() + "\n Is Completed: " + jObj.Property("is_completed").Value.ToString() + "\n Passed: " + jObj.Property("passed_count").Value.ToString() + "\n Failed: " + jObj.Property("failed_count").Value.ToString() + "\n Untested: " + jObj.Property("untested_count").Value.ToString();
-                        }
+                        attach.Text = RunText(jObj);
+
                         attachments.Add(attach);
                     }
                     else
@@ -359,6 +341,30 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 }
             }
             return attachments;
+        }
+
+        public string RunText(JObject jObj)
+        {
+			StringBuilder builder = new StringBuilder();
+
+			if (!string.IsNullOrEmpty(jObj.Property("plan_id").Value.ToString()))
+			{
+				builder.Append("Plan ID: ").Append(jObj.Property("plan_id").Value.ToString()).Append("\n");
+			}
+			else
+			{
+				builder.Append("Plan ID: N/A").Append("\n");
+			}
+
+			builder.Append("Run ID: ").Append(jObj.Property("id").Value.ToString()).Append("\n");
+			builder.Append("Suite ID: ").Append(jObj.Property("suite_id").Value.ToString()).Append("\n");
+			builder.Append(jObj.Property("description").Value.ToString()).Append("\n");
+			builder.Append("Is Completed: ").Append(jObj.Property("is_completed").Value.ToString()).Append("\n");
+			builder.Append("Passed: ").Append(jObj.Property("passed_count").Value.ToString()).Append("\n");
+			builder.Append("Failed: ").Append(jObj.Property("failed_count").Value.ToString()).Append("\n");
+			builder.Append("Untested: ").Append(jObj.Property("untested_count").Value.ToString());
+
+            return builder.ToString();
         }
 
         public List<List<Attachment>> SplitList(List<Attachment> listOfAttachments, int nSize)
