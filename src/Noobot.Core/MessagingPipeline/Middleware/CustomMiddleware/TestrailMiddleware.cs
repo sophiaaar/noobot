@@ -177,7 +177,6 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                             yield return message.ReplyToChannel(responseFromAPI, list);
                         }
                         yield return message.ReplyToChannel("Pin whatever you need for future use!");
-                        //yield return message.ReplyToChannel(responseFromAPI, suiteAttachments);
                     }
                     else
                     {
@@ -306,7 +305,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
 
                     try
                     {
-                        JArray c = (JArray)client.SendGet($"get_sections/{terms[0]}&suite_id={terms[1]}"); //need to get IDs first
+                        JArray c = (JArray)client.SendGet($"get_sections/{terms[0]}&suite_id={terms[1]}");
                         JArray parsed = _parse.ParseSections(c);
                         sectionAttachments = _parse.CreateAttachmentsFromSections(parsed);
                         responseFromAPI = "";
@@ -335,7 +334,6 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                     {
                         yield return message.ReplyToChannel(responseFromAPI);
                     }
-                    //yield return message.ReplyToChannel(responseFromAPI);
                 }
             }
         }
@@ -447,7 +445,6 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 {
                     try
                     {
-                        //parse first
                         JArray c = (JArray)client.SendGet($"get_runs/{terms[0]}");
                         JArray parsed = _parse.ParseRuns(c);
                         runSearchAttachments = _parse.CreateAttachmentsFromRunSearch(parsed, terms[1]);
@@ -457,7 +454,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                     {
                         responseFromAPI = e.ToString();
                     }
-                    //yield return message.ReplyToChannel(responseFromAPI, runSearchAttachments);
+
                     if (runSearchAttachments.Count != 0)
                     {
                         if (runSearchAttachments.Count > 6)
@@ -478,7 +475,6 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                     {
                         yield return message.ReplyToChannel(responseFromAPI);
                     }
-                    //yield return message.ReplyToChannel(responseFromAPI);
                 }
             }
         }
@@ -518,7 +514,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                     {
                         responseFromAPI = e.ToString();
                     }
-                    //yield return message.ReplyToChannel(responseFromAPI, runSearchAttachments);
+
                     if (runTodayAttachments.Count != 0)
                     {
                         if (runTodayAttachments.Count > 6)
@@ -539,7 +535,6 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                     {
                         yield return message.ReplyToChannel(responseFromAPI);
                     }
-                    //yield return message.ReplyToChannel(responseFromAPI);
                 }
             }
         }
@@ -622,10 +617,6 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                     JArray parsedSections = _parse.ParseSectionGetName(jArrSections);
 
                     runAttachments = _parse.CreateAttachmentsFromCloseRun(parsedRun, parsedSections);
-
-					//JArray c = (JArray)client.SendGet($"get_sections/{terms[0]}&suite_id={terms[1]}"); //need to get IDs first
-					//JArray parsed = _parse.ParseSections(c);
-					//sectionAttachments = _parse.CreateAttachmentsFromSections(c);
 
                     responseFromAPI = "";
                 }

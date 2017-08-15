@@ -324,19 +324,22 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 Attachment attach = new Attachment();
                 if (!string.IsNullOrEmpty(jObj.Property("completed_on").Value.ToString()))
                 {
-                    DateTimeOffset completedOn = DateTimeOffset.FromUnixTimeSeconds(jObj.Property("completed_on").Value.ToObject<long>());
-                    DateTime completedOnDateTime = completedOn.DateTime;
-                    if (completedOnDateTime >= DateTime.Today)
+                    if (jObj.Property("name").Value.ToString().ToLower().Contains(searchTerm.ToLower()))
                     {
-                        attach.Title = jObj.Property("name").Value.ToString();
-                        attach.TitleLink = jObj.Property("url").Value.ToString();
-                        attach.Text = RunText(jObj);
+                        DateTimeOffset completedOn = DateTimeOffset.FromUnixTimeSeconds(jObj.Property("completed_on").Value.ToObject<long>());
+                        DateTime completedOnDateTime = completedOn.DateTime;
+                        if (completedOnDateTime >= DateTime.Today)
+                        {
+                            attach.Title = jObj.Property("name").Value.ToString();
+                            attach.TitleLink = jObj.Property("url").Value.ToString();
+                            attach.Text = RunText(jObj);
 
-                        attachments.Add(attach);
-                    }
-                    else
-                    {
-                        continue;
+                            attachments.Add(attach);
+                        }
+                        else
+                        {
+                            continue;
+                        }
                     }
                 }
             }
