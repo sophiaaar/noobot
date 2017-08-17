@@ -654,5 +654,64 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 yield return message.ReplyToChannel(responseFromAPI);
             }
         }
+
+		private IEnumerable<ResponseMessage> CasesHandler(IncomingMessage message, IValidHandle matchedHandle)
+		{
+			string searchTerm = message.TargetedText.Substring("cases".Length).Trim();
+
+			if (string.IsNullOrEmpty(searchTerm))
+			{
+				yield return message.ReplyToChannel("Give me something to search! eg cases [project_id] [suite_id] eg sections 1 1");
+			}
+			else
+			{
+				yield return message.IndicateTypingOnChannel();
+				APIClient client = ConnectToTestrail();
+				string responseFromAPI = "";
+				List<Attachment> sectionAttachments = new List<Attachment>();
+				List<List<Attachment>> listOfLists = new List<List<Attachment>>();
+
+				string[] terms = searchTerm.Split(new char[] { ' ' }, 2);
+				if (terms.Length == 1)
+				{
+					yield return message.ReplyToChannel("Search using a project id and a suite id. eg sections [project_id] [suite_id] [section_id] eg sections 1 1 1");
+				}
+				else
+				{
+
+					try
+					{
+                        JArray c = (JArray)client.SendGet($"get_cases/{terms[0]}&suite_id={terms[1]}&section_id{terms[2]}");
+						JArray parsed = _parse.ParseSections(c);
+						sectionAttachments = _parse.CreateAttachmentsFromSections(parsed);
+						responseFromAPI = "";
+					}
+					catch (APIException e)
+					{
+						responseFromAPI = e.ToString();
+					}
+					if (sectionAttachments.Count != 0)
+					{
+						if (sectionAttachments.Count > 10)
+						{
+							listOfLists = _parse.SplitList(sectionAttachments, 9);
+							foreach (List<Attachment> list in listOfLists)
+							{
+								yield return message.ReplyToChannel(responseFromAPI, list);
+							}
+							yield return message.ReplyToChannel(responseFromAPI, sectionAttachments);
+						}
+						else
+						{
+							yield return message.ReplyToChannel(responseFromAPI, sectionAttachments);
+						}
+					}
+					else
+					{
+						yield return message.ReplyToChannel(responseFromAPI);
+					}
+				}
+			}
+		}
     }
 }

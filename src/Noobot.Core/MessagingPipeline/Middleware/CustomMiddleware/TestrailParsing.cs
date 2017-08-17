@@ -142,7 +142,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 Attachment attach = new Attachment();
                 attach.Title = jObj.Property("name").Value.ToString();
                 attach.TitleLink = jObj.Property("url").Value.ToString();
-                attach.Text = "Suite ID = " + jObj.Property("id").Value.ToString() + "\n" + jObj.Property("description").Value.ToString();
+                attach.Text = "Suite ID: " + jObj.Property("id").Value.ToString() + "\n" + jObj.Property("description").Value.ToString();
                 attachments.Add(attach);
             }
             return attachments;
@@ -158,7 +158,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 {
                     attach.Title = jObj.Property("name").Value.ToString();
                     attach.TitleLink = jObj.Property("url").Value.ToString();
-                    attach.Text = "Suite ID = " + jObj.Property("id").Value.ToString() + "\n" + jObj.Property("description").Value.ToString();
+                    attach.Text = "Suite ID: " + jObj.Property("id").Value.ToString() + "\n" + jObj.Property("description").Value.ToString();
                     attachments.Add(attach);
                 }
             }
@@ -184,7 +184,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 Attachment attach = new Attachment();
                 attach.Title = jObj.Property("name").Value.ToString();
                 attach.TitleLink = jObj.Property("url").Value.ToString();
-                attach.Text = "Project ID = " + jObj.Property("id").Value.ToString();
+                attach.Text = "Project ID: " + jObj.Property("id").Value.ToString();
                 attachments.Add(attach);
             }
             return attachments;
@@ -198,7 +198,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 Attachment attach = new Attachment();
                 attach.Title = jObj.Property("name").Value.ToString();
                 //attach.TitleLink = jObj.Property("url").Value.ToString();
-                attach.Text = "Section ID = " + jObj.Property("id").Value.ToString() + "\n" + jObj.Property("description").Value.ToString();
+                attach.Text = "Section ID: " + jObj.Property("id").Value.ToString() + "\n" + jObj.Property("description").Value.ToString();
                 attachments.Add(attach);
             }
             return attachments;
