@@ -134,6 +134,33 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
             return array;
         }
 
+		public JObject ParseCase(JObject jObj)
+		{
+			jObj.Property("created_on").Remove();
+			jObj.Property("created_by").Remove();
+			jObj.Property("estimate").Remove();
+			jObj.Property("estimate_forecast").Remove();
+			jObj.Property("milestone_id").Remove();
+			jObj.Property("priority_id").Remove();
+			jObj.Property("template_id").Remove();
+			jObj.Property("type_id").Remove();
+            jObj.Property("section_id").Remove();
+            jObj.Property("suite_id").Remove();
+			jObj.Property("updated_by").Remove();
+			jObj.Property("updated_on").Remove();
+			return jObj;
+		}
+
+		public JArray ParseCases(JArray array)
+		{
+			for (int i = 0; i < array.Count; i++)
+			{
+				JObject arrayObject = array[i].ToObject<JObject>();
+                arrayObject = ParseCase(arrayObject);
+			}
+			return array;
+		}
+
         public List<Attachment> CreateAttachmentsFromSuites(JArray array)
         {
             List<Attachment> attachments = new List<Attachment>();
@@ -345,6 +372,20 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
             }
             return attachments;
         }
+
+		public List<Attachment> CreateAttachmentsFromCases(JArray array)
+		{
+			List<Attachment> attachments = new List<Attachment>();
+			foreach (JObject jObj in array)
+			{
+				Attachment attach = new Attachment();
+				attach.Title = jObj.Property("title").Value.ToString();
+
+                attach.Text = "Case ID: " + jObj.Property("id").Value.ToString() + "\nReferences: " + jObj.Property("refs").Value.ToString();
+				attachments.Add(attach);
+			}
+			return attachments;
+		}
 
         public string RunText(JObject jObj)
         {

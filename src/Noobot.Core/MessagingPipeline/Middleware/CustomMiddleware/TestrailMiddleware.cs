@@ -128,7 +128,16 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                     },
                     Description = "Lists all tests for a test run eg tests 2",
                     EvaluatorFunc = TestsHandler
-                }
+                },
+				new HandlerMapping
+				{
+					ValidHandles = new IValidHandle[]
+					{
+						new StartsWithHandle("cases"),
+					},
+					Description = "Lists cases in a suite using a project id and a suite id. eg cases [project_id] [suite_id] eg cases 1 1",
+                    EvaluatorFunc = CasesHandler
+				}
             };
         }
 
@@ -293,6 +302,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 APIClient client = ConnectToTestrail();
                 string responseFromAPI = "";
                 List<Attachment> sectionAttachments = new List<Attachment>();
+                List<Attachment> suiteAttachments = new List<Attachment>();
                 List<List<Attachment>> listOfLists = new List<List<Attachment>>();
 
                 string[] terms = searchTerm.Split(new char[] { ' ' }, 2);
@@ -305,6 +315,18 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
 
                     try
                     {
+						try
+						{
+							JObject suite = (JObject)client.SendGet($"get_suite/{terms[1]}");
+							JObject parsedSuite = _parse.ParseSuiteID(suite);
+							suiteAttachments = _parse.CreateAttachmentsFromSuiteID(parsedSuite);
+							responseFromAPI = "";
+						}
+						catch (APIException e)
+						{
+							responseFromAPI = e.ToString();
+						}
+
                         JArray c = (JArray)client.SendGet($"get_sections/{terms[0]}&suite_id={terms[1]}");
                         JArray parsed = _parse.ParseSections(c);
                         sectionAttachments = _parse.CreateAttachmentsFromSections(parsed);
@@ -314,6 +336,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                     {
                         responseFromAPI = e.ToString();
                     }
+					yield return message.ReplyToChannel(responseFromAPI, suiteAttachments);
                     if (sectionAttachments.Count != 0)
                     {
                         if (sectionAttachments.Count > 10)
@@ -323,7 +346,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                             {
                                 yield return message.ReplyToChannel(responseFromAPI, list);
                             }
-                            yield return message.ReplyToChannel(responseFromAPI, sectionAttachments);
+                            //yield return message.ReplyToChannel(responseFromAPI, sectionAttachments);
                         }
                         else
                         {
@@ -375,7 +398,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                         {
                             yield return message.ReplyToChannel(responseFromAPI, list);
                         }
-                        yield return message.ReplyToChannel(responseFromAPI, plansAttachments);
+                        //yield return message.ReplyToChannel(responseFromAPI, plansAttachments);
                     }
                     else
                     {
@@ -386,7 +409,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 {
                     yield return message.ReplyToChannel(responseFromAPI);
                 }
-                yield return message.ReplyToChannel(responseFromAPI);
+                //yield return message.ReplyToChannel(responseFromAPI);
             }
         }
 
@@ -464,7 +487,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                             {
                                 yield return message.ReplyToChannel(responseFromAPI, list);
                             }
-                            yield return message.ReplyToChannel(responseFromAPI, runSearchAttachments);
+                            //yield return message.ReplyToChannel(responseFromAPI, runSearchAttachments);
                         }
                         else
                         {
@@ -524,7 +547,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                             {
                                 yield return message.ReplyToChannel(responseFromAPI, list);
                             }
-                            yield return message.ReplyToChannel(responseFromAPI, runTodayAttachments);
+                            //yield return message.ReplyToChannel(responseFromAPI, runTodayAttachments);
                         }
                         else
                         {
@@ -576,7 +599,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                         {
                             yield return message.ReplyToChannel(responseFromAPI, list);
                         }
-                        yield return message.ReplyToChannel(responseFromAPI, runsAttachments);
+                        //yield return message.ReplyToChannel(responseFromAPI, runsAttachments);
                     }
                     else
                     {
@@ -587,7 +610,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 {
                     yield return message.ReplyToChannel(responseFromAPI);
                 }
-                yield return message.ReplyToChannel(responseFromAPI);
+                //yield return message.ReplyToChannel(responseFromAPI);
             }
         }
 
@@ -624,6 +647,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 {
                     responseFromAPI = e.ToString();
                 }
+                yield return message.ReplyToChannel("The following run has been closed:");
                 yield return message.ReplyToChannel(responseFromAPI, runAttachments);
             }
         }
@@ -661,49 +685,63 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
 
 			if (string.IsNullOrEmpty(searchTerm))
 			{
-				yield return message.ReplyToChannel("Give me something to search! eg cases [project_id] [suite_id] eg sections 1 1");
+				yield return message.ReplyToChannel("Give me something to search! eg cases [project_id] [suite_id] eg cases 1 1");
 			}
 			else
 			{
 				yield return message.IndicateTypingOnChannel();
 				APIClient client = ConnectToTestrail();
 				string responseFromAPI = "";
-				List<Attachment> sectionAttachments = new List<Attachment>();
+				List<Attachment> casesAttachments = new List<Attachment>();
+                List<Attachment> suiteAttachments = new List<Attachment>();
 				List<List<Attachment>> listOfLists = new List<List<Attachment>>();
 
-				string[] terms = searchTerm.Split(new char[] { ' ' }, 2);
+                string[] terms = searchTerm.Split(new char[] { ' ' }, 2);
 				if (terms.Length == 1)
 				{
-					yield return message.ReplyToChannel("Search using a project id and a suite id. eg sections [project_id] [suite_id] [section_id] eg sections 1 1 1");
+					yield return message.ReplyToChannel("Search using a project id and a suite id. eg sections [project_id] [suite_id] eg cases 1 1");
 				}
 				else
 				{
 
 					try
 					{
-                        JArray c = (JArray)client.SendGet($"get_cases/{terms[0]}&suite_id={terms[1]}&section_id{terms[2]}");
-						JArray parsed = _parse.ParseSections(c);
-						sectionAttachments = _parse.CreateAttachmentsFromSections(parsed);
+						try
+						{
+							JObject suite = (JObject)client.SendGet($"get_suite/{terms[1]}");
+							JObject parsedSuite = _parse.ParseSuiteID(suite);
+							suiteAttachments = _parse.CreateAttachmentsFromSuiteID(parsedSuite);
+							responseFromAPI = "";
+						}
+						catch (APIException e)
+						{
+							responseFromAPI = e.ToString();
+						}
+
+                        JArray c = (JArray)client.SendGet($"get_cases/{terms[0]}&suite_id={terms[1]}");
+						JArray parsed = _parse.ParseCases(c);
+						casesAttachments = _parse.CreateAttachmentsFromCases(parsed);
 						responseFromAPI = "";
 					}
 					catch (APIException e)
 					{
 						responseFromAPI = e.ToString();
 					}
-					if (sectionAttachments.Count != 0)
+                    yield return message.ReplyToChannel(responseFromAPI, suiteAttachments);
+					if (casesAttachments.Count != 0)
 					{
-						if (sectionAttachments.Count > 10)
+						if (casesAttachments.Count > 5)
 						{
-							listOfLists = _parse.SplitList(sectionAttachments, 9);
+							listOfLists = _parse.SplitList(casesAttachments, 4);
 							foreach (List<Attachment> list in listOfLists)
 							{
 								yield return message.ReplyToChannel(responseFromAPI, list);
 							}
-							yield return message.ReplyToChannel(responseFromAPI, sectionAttachments);
+							//yield return message.ReplyToChannel(responseFromAPI, casesAttachments);
 						}
 						else
 						{
-							yield return message.ReplyToChannel(responseFromAPI, sectionAttachments);
+							yield return message.ReplyToChannel(responseFromAPI, casesAttachments);
 						}
 					}
 					else
