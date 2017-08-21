@@ -381,7 +381,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
 				Attachment attach = new Attachment();
 				attach.Title = jObj.Property("title").Value.ToString();
 
-                attach.Text = "Case ID: " + jObj.Property("id").Value.ToString() + "\nReferences: " + jObj.Property("refs").Value.ToString();
+                attach.Text = "References: " + jObj.Property("refs").Value.ToString();
 				attachments.Add(attach);
 			}
 			return attachments;
