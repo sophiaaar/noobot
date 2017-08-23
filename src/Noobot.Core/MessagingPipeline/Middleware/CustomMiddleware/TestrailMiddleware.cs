@@ -137,6 +137,15 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
 					},
 					Description = "Lists cases in a suite using a project id and a suite id. eg cases [project_id] [suite_id] eg cases 1 1",
                     EvaluatorFunc = CasesHandler
+				},
+           		new HandlerMapping
+				{
+					ValidHandles = new IValidHandle[]
+					{
+						new StartsWithHandle("section_cases"),
+					},
+					Description = "Lists cases in a section of a suite. eg cases [project_id] [suite_id] [section_id] eg cases 1 1 1",
+					EvaluatorFunc = CasesInSectionHandler
 				}
             };
         }
@@ -742,6 +751,86 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
 						if (casesAttachments.Count > 5)
 						{
 							listOfLists = _parse.SplitList(casesAttachments, 4);
+							foreach (List<Attachment> list in listOfLists)
+							{
+								yield return message.ReplyToChannel(responseFromAPI, list);
+							}
+							//yield return message.ReplyToChannel(responseFromAPI, casesAttachments);
+						}
+						else
+						{
+							yield return message.ReplyToChannel(responseFromAPI, casesAttachments);
+						}
+					}
+					else
+					{
+						yield return message.ReplyToChannel(responseFromAPI);
+					}
+				}
+			}
+		}
+
+		private IEnumerable<ResponseMessage> CasesInSectionHandler(IncomingMessage message, IValidHandle matchedHandle)
+		{
+			string searchTerm = message.TargetedText.Substring("section_cases".Length).Trim();
+
+			if (string.IsNullOrEmpty(searchTerm))
+			{
+				yield return message.ReplyToChannel("Give me something to search! eg cases [project_id] [suite_id] [section_id] eg cases 1 1 1");
+			}
+			else
+			{
+				yield return message.IndicateTypingOnChannel();
+				APIClient client = ConnectToTestrail();
+				string responseFromAPI = "";
+				List<Attachment> casesAttachments = new List<Attachment>();
+                List<Attachment> sectionAttachments = new List<Attachment>();
+                List<Attachment> suiteAttachments = new List<Attachment>();
+				List<List<Attachment>> listOfLists = new List<List<Attachment>>();
+
+				string[] terms = searchTerm.Split(new char[] { ' ' }, 3);
+				if (terms.Length == 1)
+				{
+					yield return message.ReplyToChannel("Search using a project id, suite id, and section id. eg sections [project_id] [suite_id] [section_id] eg cases 1 1 1");
+				}
+				else
+				{
+
+					try
+					{
+						try
+						{
+							JObject suite = (JObject)client.SendGet($"get_suite/{terms[1]}");
+							JObject parsedSuite = _parse.ParseSuiteID(suite);
+							suiteAttachments = _parse.CreateAttachmentsFromSuiteID(parsedSuite);
+                            
+							JObject section = (JObject)client.SendGet($"get_section/{terms[2]}");
+                            JObject parsedSection = _parse.ParseSection(section);
+                            sectionAttachments = _parse.CreateAttachmentsFromSection(parsedSection);
+							responseFromAPI = "";
+						}
+						catch (APIException e)
+						{
+							responseFromAPI = e.ToString();
+						}
+
+                        JArray c = (JArray)client.SendGet($"get_cases/{terms[0]}&suite_id={terms[1]}&section_id{terms[2]}");
+                        JArray parsed = _parse.ParseCases(c);
+                        //only include ones with the relevant section_id
+                        casesAttachments = _parse.CreateAttachmentsFromCasesInSection(parsed, terms[2]);
+						responseFromAPI = "";
+					}
+					catch (APIException e)
+					{
+						responseFromAPI = e.ToString();
+					}
+                    yield return message.ReplyToChannel(responseFromAPI, suiteAttachments);
+					yield return message.ReplyToChannel(responseFromAPI, sectionAttachments);
+					if (casesAttachments.Count != 0)
+					{
+						if (casesAttachments.Count > 11)
+						{
+							listOfLists = _parse.SplitList(casesAttachments, 10);
 							foreach (List<Attachment> list in listOfLists)
 							{
 								yield return message.ReplyToChannel(responseFromAPI, list);

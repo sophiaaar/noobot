@@ -12,16 +12,23 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
 {
     internal class TestrailParsing
     {
+        public JObject ParseSection(JObject jObj)
+        {
+			jObj.Property("suite_id").Remove();
+			jObj.Property("parent_id").Remove();
+			jObj.Property("display_order").Remove();
+			jObj.Property("depth").Remove();
+            return jObj;
+        }
+
         public JArray ParseSections(JArray array)
         {
-            foreach (JObject arrayObject in array)
-            {
-                arrayObject.Property("suite_id").Remove();
-                arrayObject.Property("parent_id").Remove();
-                arrayObject.Property("display_order").Remove();
-                arrayObject.Property("depth").Remove();
-            }            
-            return array;
+			for (int i = 0; i < array.Count; i++)
+			{
+				JObject arrayObject = array[i].ToObject<JObject>();
+                arrayObject = ParseSection(arrayObject);
+			}
+			return array;
         }
 
 		public JArray ParseSectionGetName(JArray array)
@@ -144,8 +151,8 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
 			jObj.Property("priority_id").Remove();
 			jObj.Property("template_id").Remove();
 			jObj.Property("type_id").Remove();
-            jObj.Property("section_id").Remove();
-            jObj.Property("suite_id").Remove();
+            //jObj.Property("section_id").Remove();
+            //jObj.Property("suite_id").Remove();
 			jObj.Property("updated_by").Remove();
 			jObj.Property("updated_on").Remove();
 			return jObj;
@@ -160,6 +167,24 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
 			}
 			return array;
 		}
+
+		//public JArray ParseCasesID(JArray array, string section_id)
+		//{
+		//	for (int i = 0; i < array.Count; i++)
+  //          {
+		//		JObject arrayObject = array[i].ToObject<JObject>();
+
+  //              if (arrayObject.Property("section_id").Value.ToString() == section_id)
+  //              {
+  //                  arrayObject = ParseCase(arrayObject);
+  //              }
+  //              else
+  //              {
+  //                  array.Remove(arrayObject);
+  //              }
+		//	}
+		//	return array;
+		//}
 
         public List<Attachment> CreateAttachmentsFromSuites(JArray array)
         {
@@ -216,6 +241,16 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
             }
             return attachments;
         }
+
+        public List<Attachment> CreateAttachmentsFromSection(JObject jObj)
+		{
+			List<Attachment> attachments = new List<Attachment>();
+			Attachment attach = new Attachment();
+			attach.Title = jObj.Property("name").Value.ToString();
+			attach.Text = jObj.Property("description").Value.ToString();
+			attachments.Add(attach);
+			return attachments;
+		}
 
         public List<Attachment> CreateAttachmentsFromSections(JArray array)
         {
@@ -383,6 +418,23 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
 
                 attach.Text = "References: " + jObj.Property("refs").Value.ToString();
 				attachments.Add(attach);
+			}
+			return attachments;
+		}
+
+		public List<Attachment> CreateAttachmentsFromCasesInSection(JArray array, string section_id)
+		{
+			List<Attachment> attachments = new List<Attachment>();
+			foreach (JObject jObj in array)
+			{
+                if (jObj.Property("section_id").Value.ToString() == section_id)
+                {
+                    Attachment attach = new Attachment();
+                    attach.Title = jObj.Property("title").Value.ToString();
+
+                    attach.Text = "References: " + jObj.Property("refs").Value.ToString();
+                    attachments.Add(attach);
+                }
 			}
 			return attachments;
 		}
