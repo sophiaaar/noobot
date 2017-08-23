@@ -432,7 +432,16 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 {
                     JObject c = (JObject)client.SendGet($"get_run/{searchTerm}");
                     JObject parsed = _parse.ParseRun(c);
-                    runAttachments = _parse.CreateAttachmentsFromRun(parsed);
+                    //runAttachments = _parse.CreateAttachmentsFromRun(parsed);
+
+
+					string project_id = parsed.Property("project_id").Value.ToString();
+					string suite_id = parsed.Property("suite_id").Value.ToString();
+					JArray jArrSections = (JArray)client.SendGet($"get_sections/{project_id}&suite_id={suite_id}");
+					JArray parsedSections = _parse.ParseSectionGetName(jArrSections);
+
+					runAttachments = _parse.CreateAttachmentsFromCloseRun(parsed, parsedSections);
+
                     responseFromAPI = "";
                 }
                 catch (APIException e)
