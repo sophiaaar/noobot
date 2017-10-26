@@ -82,7 +82,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
         public JObject ParsePlan(JObject jObj)
         {
             jObj.Property("assignedto_id").Remove();
-            jObj.Property("is_completed").Remove();
+            //jObj.Property("is_completed").Remove();
             jObj.Property("completed_on").Remove();
             jObj.Property("blocked_count").Remove();
             jObj.Property("retest_count").Remove();
@@ -280,6 +280,39 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
 			return attachments;
 		}
 
+        public List<Attachment> CreateAttachmentsFromPlan(JObject jObj, JArray runsInPlan)
+        {
+            List<Attachment> attachments = new List<Attachment>();
+            Attachment attach = new Attachment();
+            attach.Title = jObj.Property("name").Value.ToString();
+            attach.TitleLink = jObj.Property("url").Value.ToString();
+            attach.Text = PlanText(jObj);
+
+            attachments.Add(attach);
+
+
+            foreach (JObject runObject in runsInPlan)
+            {
+                Attachment runAttach = new Attachment();
+                runAttach.Title = runObject.Property("name").Value.ToString();
+                //runAttach.TitleLink = runObject.Property("url").Value.ToString();
+
+                StringBuilder builder = new StringBuilder();
+
+                builder.Append("Run ID: ").Append(runObject.Property("id").Value.ToString()).Append("\n");
+                builder.Append(runObject.Property("description").Value.ToString()).Append("\n");
+                builder.Append("Config: ").Append(runObject.Property("config").Value.ToString()).Append("\n");
+                builder.Append("Passed: ").Append(runObject.Property("passed_count").Value.ToString()).Append("\n");
+                builder.Append("Failed: ").Append(runObject.Property("failed_count").Value.ToString()).Append("\n");
+                builder.Append("Untested: ").Append(runObject.Property("untested_count").Value.ToString());
+
+                runAttach.Text = builder.ToString();
+                attachments.Add(runAttach);
+            }
+
+            return attachments;
+        }
+
         public List<Attachment> CreateAttachmentsFromPlans(JArray array)
         {
             List<Attachment> attachments = new List<Attachment>();
@@ -292,6 +325,7 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 StringBuilder builder = new StringBuilder();
                 builder.Append("Plan ID: ").Append(jObj.Property("id").Value.ToString()).Append("\n");
                 builder.Append(jObj.Property("description").Value.ToString()).Append("\n");
+                builder.Append("Config: ").Append(jObj.Property("config").Value.ToString()).Append("\n");
                 builder.Append("Passed: ").Append(jObj.Property("passed_count").Value.ToString()).Append("\n");
                 builder.Append("Failed: ").Append(jObj.Property("failed_count").Value.ToString()).Append("\n");
                 builder.Append("Untested: ").Append(jObj.Property("untested_count").Value.ToString());
@@ -452,15 +486,38 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
 				builder.Append("Plan ID: N/A").Append("\n");
 			}
 
-			builder.Append("Run ID: ").Append(jObj.Property("id").Value.ToString()).Append("\n");
+            builder.Append(jObj.Property("description").Value.ToString()).Append("\n");
+            builder.Append("Is Completed: ").Append(jObj.Property("is_completed").Value.ToString()).Append("\n");
+            builder.Append("Passed: ").Append(jObj.Property("passed_count").Value.ToString()).Append("\n");
+            builder.Append("Failed: ").Append(jObj.Property("failed_count").Value.ToString()).Append("\n");
+            builder.Append("Untested: ").Append(jObj.Property("untested_count").Value.ToString());
+            builder.Append("Run ID: ").Append(jObj.Property("id").Value.ToString()).Append("\n");
 			builder.Append("Suite ID: ").Append(jObj.Property("suite_id").Value.ToString()).Append("\n");
-			builder.Append(jObj.Property("description").Value.ToString()).Append("\n");
-			builder.Append("Is Completed: ").Append(jObj.Property("is_completed").Value.ToString()).Append("\n");
-			builder.Append("Passed: ").Append(jObj.Property("passed_count").Value.ToString()).Append("\n");
-			builder.Append("Failed: ").Append(jObj.Property("failed_count").Value.ToString()).Append("\n");
-			builder.Append("Untested: ").Append(jObj.Property("untested_count").Value.ToString());
 
             return builder.ToString();
+        }
+
+        public string PlanText(JObject jObj)
+        {
+            StringBuilder builder = new StringBuilder();
+
+            //builder.Append("Plan ID: ").Append(jObj.Property("id").Value.ToString()).Append("\n");
+
+
+            builder.Append(jObj.Property("description").Value.ToString()).Append("\n");
+            builder.Append("Is Completed: ").Append(jObj.Property("is_completed").Value.ToString()).Append("\n");
+            //builder.Append("Passed: ").Append(jObj.Property("passed_count").Value.ToString()).Append("\n");
+            //builder.Append("Failed: ").Append(jObj.Property("failed_count").Value.ToString()).Append("\n");
+            //builder.Append("Untested: ").Append(jObj.Property("untested_count").Value.ToString()).Append("\n");
+
+            return builder.ToString();
+        }
+
+        public JArray GetRunsInPlan(JObject jObj)
+        {
+            JObject entries = (JObject)jObj.Property("entries").First.First;
+            JArray runs = (JArray)entries.Property("runs").First;
+            return runs;
         }
 
         public List<List<Attachment>> SplitList(List<Attachment> listOfAttachments, int nSize)
@@ -472,6 +529,18 @@ namespace Noobot.Core.MessagingPipeline.Middleware.CustomMiddleware
                 list.Add(listOfAttachments.GetRange(i, Math.Min(nSize, listOfAttachments.Count - i)));
             }
             return list;
+        }
+
+        public string PrettifyErrorMessage(string rawError)
+        {
+            string input = rawError;
+            string output = "";
+            int index = input.IndexOf(")");
+            if (index > 0)
+            {
+                output = input.Substring(0, index + 1);
+            }
+            return output;
         }
     }
 }
